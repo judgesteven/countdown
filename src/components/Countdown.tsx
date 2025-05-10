@@ -12,10 +12,17 @@ const Countdown = () => {
   const [progress, setProgress] = useState(0);
   const [daysList, setDaysList] = useState<{ date: string; isPast: boolean; dateObj: Date }[]>([]);
 
-  // Fixed start date: May 9th, 2025 at 2am
-  const startTime = new Date(2025, 4, 9, 2, 0, 0); // Month is 0-based, so 4 = May
-  // Fixed end date: June 7th, 2025 at 2am
-  const endTime = new Date(2025, 5, 7, 2, 0, 0); // Month is 0-based, so 5 = June
+  // Helper function to convert to CET+1
+  const toCET = (date: Date) => {
+    const cetDate = new Date(date);
+    cetDate.setHours(cetDate.getHours() + 1); // Add 1 hour for CET+1
+    return cetDate;
+  };
+
+  // Fixed start date: May 9th, 2025 at 2am CET+1
+  const startTime = toCET(new Date(2025, 4, 9, 2, 0, 0)); // Month is 0-based, so 4 = May
+  // Fixed end date: June 7th, 2025 at 2am CET+1
+  const endTime = toCET(new Date(2025, 5, 7, 2, 0, 0)); // Month is 0-based, so 5 = June
 
   useEffect(() => {
     setMounted(true);
@@ -29,7 +36,8 @@ const Countdown = () => {
       const dateString = currentDate.toLocaleDateString('en-US', { 
         weekday: 'long',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: 'Europe/Paris' // Use Paris timezone for CET
       });
       days.push({
         date: dateString,
@@ -41,7 +49,7 @@ const Countdown = () => {
     setDaysList(days);
 
     const calculateTimeLeft = () => {
-      const now = new Date();
+      const now = toCET(new Date()); // Convert current time to CET+1
       const difference = endTime.getTime() - now.getTime();
       
       if (difference > 0) {
@@ -60,11 +68,11 @@ const Countdown = () => {
           minutes
         });
 
-        // Update past days - only mark as past if we're past midnight of that day
+        // Update past days - only mark as past if we're past midnight of that day in CET+1
         setDaysList(prevDays => 
           prevDays.map(day => {
             const dayDate = day.dateObj;
-            const midnight = new Date(dayDate);
+            const midnight = toCET(new Date(dayDate));
             midnight.setHours(0, 0, 0, 0);
             return {
               ...day,
