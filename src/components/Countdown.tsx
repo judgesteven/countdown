@@ -10,7 +10,7 @@ const Countdown = () => {
     minutes: 0,
     seconds: 0
   });
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     setMounted(true);
@@ -30,8 +30,8 @@ const Countdown = () => {
       
       if (difference > 0) {
         const hoursElapsed = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60);
-        const currentProgress = (hoursElapsed / totalHours) * 100;
-        setProgress(Math.min(currentProgress, 100));
+        const currentProgress = 100 - ((hoursElapsed / totalHours) * 100);
+        setProgress(Math.max(currentProgress, 0));
 
         setTimeLeft({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -60,14 +60,11 @@ const Countdown = () => {
     <div className="flex flex-col items-center justify-center py-12 text-white">
       <h1 className="text-4xl font-bold mb-8">Countdown until Finland</h1>
       <div className="w-full max-w-2xl mb-8">
-        <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
+        <div className="w-full bg-gray-700 rounded-full h-4">
           <div 
             className="bg-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}
           />
-        </div>
-        <div className="text-right text-sm text-gray-400">
-          {progress.toFixed(1)}% Complete
         </div>
       </div>
       <div className="grid grid-cols-4 gap-8 text-center">
