@@ -11,7 +11,6 @@ const Countdown = () => {
   });
   const [progress, setProgress] = useState(0);
   const [daysList, setDaysList] = useState<{ date: string; isPast: boolean; dateObj: Date }[]>([]);
-  const [debugInfo, setDebugInfo] = useState('');
   const [dayMarkers, setDayMarkers] = useState<number[]>([]);
 
   // Helper function to convert to CET+1
@@ -100,19 +99,6 @@ const Countdown = () => {
             const dayEnd = getEndOfDay(day.dateObj);
             const isPast = now > dayEnd;
             
-            // Debug info for the current day
-            if (day.date.includes('Saturday, May 10')) {
-              setDebugInfo(`
-                Current time: ${now.toLocaleString()}
-                Day start: ${dayStart.toLocaleString()}
-                Day end: ${dayEnd.toLocaleString()}
-                Is past: ${isPast}
-                Hours elapsed: ${hoursElapsed}
-                Total hours: ${totalHours}
-                Progress: ${currentProgress}%
-              `);
-            }
-            
             return {
               ...day,
               isPast
@@ -193,10 +179,6 @@ const Countdown = () => {
             </div>
           ))}
         </div>
-      </div>
-      {/* Debug information */}
-      <div className="mt-8 p-4 bg-gray-800 rounded-lg text-sm font-mono whitespace-pre">
-        {debugInfo}
       </div>
     </div>
   );
