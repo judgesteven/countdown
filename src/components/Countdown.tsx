@@ -12,10 +12,10 @@ const Countdown = () => {
   const [progress, setProgress] = useState(0);
   const [daysList, setDaysList] = useState<{ date: string; isPast: boolean }[]>([]);
 
-  // Fixed start date: May 9th, 2024 at midnight
-  const startTime = new Date(2024, 4, 9, 0, 0, 0); // Month is 0-based, so 4 = May
-  // Fixed end date: June 7th, 2024 at 2am
-  const endTime = new Date(2024, 5, 7, 2, 0, 0); // Month is 0-based, so 5 = June
+  // Fixed start date: May 9th, 2025 at 2am
+  const startTime = new Date(2025, 4, 9, 2, 0, 0); // Month is 0-based, so 4 = May
+  // Fixed end date: June 7th, 2025 at 2am
+  const endTime = new Date(2025, 5, 7, 2, 0, 0); // Month is 0-based, so 5 = June
 
   useEffect(() => {
     setMounted(true);
@@ -29,7 +29,8 @@ const Countdown = () => {
       const dateString = currentDate.toLocaleDateString('en-US', { 
         weekday: 'long',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        year: 'numeric'
       });
       days.push({
         date: dateString,
@@ -48,10 +49,15 @@ const Countdown = () => {
         const currentProgress = (hoursElapsed / totalHours) * 100;
         setProgress(Math.min(currentProgress, 100));
 
+        // Calculate days, hours, and minutes
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+
         setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60)
+          days,
+          hours,
+          minutes
         });
 
         // Update past days
