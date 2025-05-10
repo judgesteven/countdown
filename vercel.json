@@ -1,7 +1,18 @@
 {
   "version": 2,
-  "buildCommand": "next build",
+  "buildCommand": "rm -rf .next && rm -rf node_modules && npm install && next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
 } 

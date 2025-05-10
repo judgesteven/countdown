@@ -7,6 +7,9 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   swcMinify: true,
   output: 'standalone',
+  experimental: {
+    forceSwcTransforms: true
+  },
   onDemandEntries: {
     maxInactiveAge: 0,
     pagesBufferLength: 0,
