@@ -14,7 +14,7 @@ const Countdown = () => {
   useEffect(() => {
     setMounted(true);
     const targetDate = new Date();
-    targetDate.setMonth(6); // July (0-based index)
+    targetDate.setMonth(5); // June (0-based index)
     targetDate.setDate(7);
     targetDate.setHours(2, 0, 0, 0);
 
@@ -47,7 +47,7 @@ const Countdown = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold mb-8">Countdown to July 7th, 2:00 AM</h1>
+      <h1 className="text-4xl font-bold mb-8">Countdown to June 7th, 2:00 AM</h1>
       <div className="grid grid-cols-4 gap-8 text-center">
         <div className="flex flex-col">
           <span className="text-6xl font-bold">{timeLeft.days}</span>
