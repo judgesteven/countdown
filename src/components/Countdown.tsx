@@ -34,6 +34,14 @@ const Countdown = () => {
     return toCET(end);
   };
 
+  // Helper function to get time until next hour
+  const getTimeUntilNextHour = () => {
+    const now = toCET(new Date());
+    const nextHour = new Date(now);
+    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+    return nextHour.getTime() - now.getTime();
+  };
+
   // Fixed start date: May 9th, 2025 at 2am CET+1
   const startTime = toCET(new Date(2025, 4, 9, 2, 0, 0)); // Month is 0-based, so 4 = May
   // Fixed end date: June 7th, 2025 at 2am CET+1
@@ -115,7 +123,19 @@ const Countdown = () => {
     calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
 
-    return () => clearInterval(timer);
+    // Set up hourly refresh
+    const scheduleNextRefresh = () => {
+      const timeUntilNextHour = getTimeUntilNextHour();
+      setTimeout(() => {
+        window.location.reload();
+      }, timeUntilNextHour);
+    };
+
+    scheduleNextRefresh();
+
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
 
   if (!mounted) {
