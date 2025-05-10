@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 interface DayData {
   date: string;
+  weekday: string;
   isPast: boolean;
   dateObj: Date;
   kmsRun?: number;
@@ -58,6 +59,25 @@ const Countdown = () => {
   // Fixed end date: June 7th, 2025 at 2am CET+1
   const endTime = toCET(new Date(2025, 5, 7, 2, 0, 0)); // Month is 0-based, so 5 = June
 
+  // Load saved data from localStorage
+  const loadSavedData = () => {
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('kmData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        return parsedData;
+      }
+    }
+    return null;
+  };
+
+  // Save data to localStorage
+  const saveData = (data: DayData[]) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kmData', JSON.stringify(data));
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
 
@@ -76,19 +96,33 @@ const Countdown = () => {
     const currentDate = new Date(startTime);
     while (currentDate <= endTime) {
       const dateString = currentDate.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        month: 'long',
         day: 'numeric',
         timeZone: 'Europe/Paris' // Use Paris timezone for CET
       });
+      const weekdayString = currentDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        timeZone: 'Europe/Paris'
+      });
       days.push({
         date: dateString,
+        weekday: weekdayString,
         isPast: false,
         dateObj: new Date(currentDate)
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    setDaysList(days);
+
+    // Load saved data and merge with generated days
+    const savedData = loadSavedData();
+    if (savedData) {
+      const mergedDays = days.map(day => {
+        const savedDay = savedData.find((d: DayData) => d.date === day.date);
+        return savedDay ? { ...day, kmsRun: savedDay.kmsRun, kmsWalked: savedDay.kmsWalked } : day;
+      });
+      setDaysList(mergedDays);
+    } else {
+      setDaysList(days);
+    }
 
     const calculateTimeLeft = () => {
       const now = toCET(new Date()); // Convert current time to CET+1
@@ -112,8 +146,8 @@ const Countdown = () => {
         });
 
         // Update past days - only mark as past if we're past the end of that day in CET+1
-        setDaysList(prevDays => 
-          prevDays.map(day => {
+        setDaysList(prevDays => {
+          const updatedDays = prevDays.map(day => {
             const dayStart = getStartOfDay(day.dateObj);
             const dayEnd = getEndOfDay(day.dateObj);
             const isPast = now > dayEnd;
@@ -122,8 +156,11 @@ const Countdown = () => {
               ...day,
               isPast
             };
-          })
-        );
+          });
+          // Save updated data
+          saveData(updatedDays);
+          return updatedDays;
+        });
       } else {
         // If we've passed the end date, set progress to 100%
         setProgress(100);
@@ -157,8 +194,8 @@ const Countdown = () => {
 
   const handleSubmit = () => {
     if (selectedDay) {
-      setDaysList(prevDays =>
-        prevDays.map(day =>
+      setDaysList(prevDays => {
+        const updatedDays = prevDays.map(day =>
           day.date === selectedDay.date
             ? {
                 ...day,
@@ -166,8 +203,11 @@ const Countdown = () => {
                 kmsWalked: kmsWalked ? parseFloat(kmsWalked) : undefined
               }
             : day
-        )
-      );
+        );
+        // Save updated data
+        saveData(updatedDays);
+        return updatedDays;
+      });
       setSelectedDay(null);
     }
   };
@@ -222,27 +262,70 @@ const Countdown = () => {
         </div>
       </div>
       <div className="w-[80vw]">
-        <div className="grid grid-cols-7 gap-2">
-          {daysList.map((day, index) => (
-            <div 
-              key={index}
-              className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm cursor-pointer ${
-                day.isPast ? 'opacity-50' : ''
-              }`}
-              onClick={() => handleDayClick(day)}
-            >
-              <div>{day.date}</div>
-              {day.kmsRun !== undefined && (
-                <div className="text-green-400">Run: {day.kmsRun}km</div>
-              )}
-              {day.kmsWalked !== undefined && (
-                <div className="text-blue-400">Walk: {day.kmsWalked}km</div>
-              )}
-            </div>
-          ))}
+        {/* May Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-center">May</h2>
+          <div className="grid grid-cols-7 gap-2">
+            {daysList
+              .filter(day => day.dateObj.getMonth() === 4) // May is month 4 (0-based)
+              .map((day, index) => (
+                <div 
+                  key={index}
+                  className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm cursor-pointer ${
+                    day.isPast ? 'opacity-50' : ''
+                  }`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  <div className="text-lg font-bold">{day.date}</div>
+                  <div className="text-xs text-gray-400">{day.weekday}</div>
+                  {(day.kmsRun !== undefined || day.kmsWalked !== undefined) && (
+                    <div className="flex justify-center gap-2 mt-1">
+                      {day.kmsRun !== undefined && (
+                        <span className="text-green-400 text-xs">Run: {day.kmsRun}km</span>
+                      )}
+                      {day.kmsWalked !== undefined && (
+                        <span className="text-blue-400 text-xs">Walk: {day.kmsWalked}km</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
         </div>
-        <div className="mt-8 text-center">
-          <div className="text-xl font-bold mb-2">Total Distance</div>
+
+        {/* June Section */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-center">June</h2>
+          <div className="grid grid-cols-7 gap-2">
+            {daysList
+              .filter(day => day.dateObj.getMonth() === 5) // June is month 5 (0-based)
+              .map((day, index) => (
+                <div 
+                  key={index}
+                  className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm cursor-pointer ${
+                    day.isPast ? 'opacity-50' : ''
+                  }`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  <div className="text-lg font-bold">{day.date}</div>
+                  <div className="text-xs text-gray-400">{day.weekday}</div>
+                  {(day.kmsRun !== undefined || day.kmsWalked !== undefined) && (
+                    <div className="flex justify-center gap-2 mt-1">
+                      {day.kmsRun !== undefined && (
+                        <span className="text-green-400 text-xs">Run: {day.kmsRun}km</span>
+                      )}
+                      {day.kmsWalked !== undefined && (
+                        <span className="text-blue-400 text-xs">Walk: {day.kmsWalked}km</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        <div className="mt-16 text-center">
+          <div className="text-xl font-bold mb-2">Workout Data</div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-green-400">Total Run: {totalKmsRun}km</div>
