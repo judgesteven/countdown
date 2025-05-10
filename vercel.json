@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "next build",
+  "buildCommand": "rm -rf .next && next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",
