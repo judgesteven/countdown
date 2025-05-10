@@ -27,6 +27,13 @@ const Countdown = () => {
     return toCET(start);
   };
 
+  // Helper function to get end of day in CET+1
+  const getEndOfDay = (date: Date) => {
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return toCET(end);
+  };
+
   // Fixed start date: May 9th, 2025 at 2am CET+1
   const startTime = toCET(new Date(2025, 4, 9, 2, 0, 0)); // Month is 0-based, so 4 = May
   // Fixed end date: June 7th, 2025 at 2am CET+1
@@ -77,17 +84,19 @@ const Countdown = () => {
           minutes
         });
 
-        // Update past days - only mark as past if we're past midnight of that day in CET+1
+        // Update past days - only mark as past if we're past the end of that day in CET+1
         setDaysList(prevDays => 
           prevDays.map(day => {
             const dayStart = getStartOfDay(day.dateObj);
-            const isPast = now > dayStart;
+            const dayEnd = getEndOfDay(day.dateObj);
+            const isPast = now > dayEnd;
             
             // Debug info for the current day
             if (day.date.includes('Saturday, May 10')) {
               setDebugInfo(`
                 Current time: ${now.toLocaleString()}
                 Day start: ${dayStart.toLocaleString()}
+                Day end: ${dayEnd.toLocaleString()}
                 Is past: ${isPast}
                 Hours elapsed: ${hoursElapsed}
                 Total hours: ${totalHours}
