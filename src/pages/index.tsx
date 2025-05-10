@@ -5,9 +5,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900">
       <div className="container mx-auto px-4 py-8">
-        <Countdown />
-        <div className="mt-12 border-t border-gray-700 pt-12">
-          <DaysList />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="flex items-center justify-center">
+            <Countdown />
+          </div>
+          <div className="flex items-start justify-center">
+            <DaysList />
+          </div>
         </div>
       </div>
     </div>

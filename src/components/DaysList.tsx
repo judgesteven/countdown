@@ -51,9 +51,9 @@ const DaysList = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4 text-white">Days Remaining:</h2>
-      <div className="bg-gray-800 rounded-lg p-4">
+    <div className="w-full p-6">
+      <h2 className="text-2xl font-bold mb-4 text-white text-center">Days Remaining:</h2>
+      <div className="bg-gray-800 rounded-lg p-4 max-h-[600px] overflow-y-auto">
         <ul className="space-y-2">
           {days.map((day, index) => (
             <li 
