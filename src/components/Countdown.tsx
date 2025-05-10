@@ -10,6 +10,7 @@ const Countdown = () => {
     minutes: 0
   });
   const [progress, setProgress] = useState(0);
+  const [daysList, setDaysList] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -22,6 +23,19 @@ const Countdown = () => {
 
     const startDate = new Date();
     const totalHours = (targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+
+    // Generate list of days
+    const days: string[] = [];
+    const currentDate = new Date();
+    while (currentDate < targetDate) {
+      days.push(currentDate.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      }));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setDaysList(days);
 
     const calculateTimeLeft = () => {
       const now = new Date();
@@ -73,7 +87,7 @@ const Countdown = () => {
           </svg>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-8 text-center">
+      <div className="grid grid-cols-3 gap-8 text-center mb-12">
         <div className="flex flex-col">
           <span className="text-6xl font-bold">{timeLeft.days}</span>
           <span className="text-xl">Days</span>
@@ -85,6 +99,19 @@ const Countdown = () => {
         <div className="flex flex-col">
           <span className="text-6xl font-bold">{timeLeft.minutes}</span>
           <span className="text-xl">Minutes</span>
+        </div>
+      </div>
+      <div className="w-[1800px]">
+        <h2 className="text-2xl font-bold mb-4">Days Until Finland</h2>
+        <div className="grid grid-cols-7 gap-4">
+          {daysList.map((day, index) => (
+            <div 
+              key={index}
+              className="bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 transition-colors"
+            >
+              {day}
+            </div>
+          ))}
         </div>
       </div>
     </div>
