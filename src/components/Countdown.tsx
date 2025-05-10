@@ -29,12 +29,11 @@ const Countdown = () => {
       const dateString = currentDate.toLocaleDateString('en-US', { 
         weekday: 'long',
         month: 'long',
-        day: 'numeric',
-        year: 'numeric'
+        day: 'numeric'
       });
       days.push({
         date: dateString,
-        isPast: currentDate < new Date()
+        isPast: false // Initialize all days as not past
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -60,12 +59,17 @@ const Countdown = () => {
           minutes
         });
 
-        // Update past days
+        // Update past days - only mark as past if we're past midnight of that day
         setDaysList(prevDays => 
-          prevDays.map(day => ({
-            ...day,
-            isPast: new Date(day.date) < now
-          }))
+          prevDays.map(day => {
+            const dayDate = new Date(day.date);
+            const midnight = new Date(dayDate);
+            midnight.setHours(0, 0, 0, 0);
+            return {
+              ...day,
+              isPast: now > midnight
+            };
+          })
         );
       } else {
         // If we've passed the end date, set progress to 100%
