@@ -10,7 +10,7 @@ const Countdown = () => {
     minutes: 0
   });
   const [progress, setProgress] = useState(0);
-  const [daysList, setDaysList] = useState<{ date: string; isPast: boolean }[]>([]);
+  const [daysList, setDaysList] = useState<{ date: string; isPast: boolean; dateObj: Date }[]>([]);
 
   // Fixed start date: May 9th, 2025 at 2am
   const startTime = new Date(2025, 4, 9, 2, 0, 0); // Month is 0-based, so 4 = May
@@ -23,7 +23,7 @@ const Countdown = () => {
     const totalHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
 
     // Generate list of days between start and end dates
-    const days: { date: string; isPast: boolean }[] = [];
+    const days: { date: string; isPast: boolean; dateObj: Date }[] = [];
     const currentDate = new Date(startTime);
     while (currentDate <= endTime) {
       const dateString = currentDate.toLocaleDateString('en-US', { 
@@ -33,7 +33,8 @@ const Countdown = () => {
       });
       days.push({
         date: dateString,
-        isPast: false // Initialize all days as not past
+        isPast: false,
+        dateObj: new Date(currentDate)
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -62,7 +63,7 @@ const Countdown = () => {
         // Update past days - only mark as past if we're past midnight of that day
         setDaysList(prevDays => 
           prevDays.map(day => {
-            const dayDate = new Date(day.date);
+            const dayDate = day.dateObj;
             const midnight = new Date(dayDate);
             midnight.setHours(0, 0, 0, 0);
             return {
