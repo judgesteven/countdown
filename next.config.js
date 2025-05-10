@@ -13,7 +13,12 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 0,
     pagesBufferLength: 0,
-  }
+  },
+  webpack: (config, { dev, isServer }) => {
+    // Disable caching
+    config.cache = false;
+    return config;
+  },
 }
 
 module.exports = nextConfig 
