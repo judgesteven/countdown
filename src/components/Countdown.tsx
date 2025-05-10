@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
+interface DayData {
+  date: string;
+  isPast: boolean;
+  dateObj: Date;
+  kmsRun?: number;
+  kmsWalked?: number;
+}
+
 const Countdown = () => {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
@@ -10,8 +18,11 @@ const Countdown = () => {
     minutes: 0
   });
   const [progress, setProgress] = useState(0);
-  const [daysList, setDaysList] = useState<{ date: string; isPast: boolean; dateObj: Date }[]>([]);
+  const [daysList, setDaysList] = useState<DayData[]>([]);
   const [dayMarkers, setDayMarkers] = useState<number[]>([]);
+  const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
+  const [kmsRun, setKmsRun] = useState('');
+  const [kmsWalked, setKmsWalked] = useState('');
 
   // Helper function to convert to CET+1
   const toCET = (date: Date) => {
@@ -61,7 +72,7 @@ const Countdown = () => {
     setDayMarkers(markers);
 
     // Generate list of days between start and end dates
-    const days: { date: string; isPast: boolean; dateObj: Date }[] = [];
+    const days: DayData[] = [];
     const currentDate = new Date(startTime);
     while (currentDate <= endTime) {
       const dateString = currentDate.toLocaleDateString('en-US', { 
@@ -138,6 +149,32 @@ const Countdown = () => {
     };
   }, []);
 
+  const handleDayClick = (day: DayData) => {
+    setSelectedDay(day);
+    setKmsRun(day.kmsRun?.toString() || '');
+    setKmsWalked(day.kmsWalked?.toString() || '');
+  };
+
+  const handleSubmit = () => {
+    if (selectedDay) {
+      setDaysList(prevDays =>
+        prevDays.map(day =>
+          day.date === selectedDay.date
+            ? {
+                ...day,
+                kmsRun: kmsRun ? parseFloat(kmsRun) : undefined,
+                kmsWalked: kmsWalked ? parseFloat(kmsWalked) : undefined
+              }
+            : day
+        )
+      );
+      setSelectedDay(null);
+    }
+  };
+
+  const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
+  const totalKmsWalked = daysList.reduce((sum, day) => sum + (day.kmsWalked || 0), 0);
+
   if (!mounted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-white">
@@ -189,15 +226,78 @@ const Countdown = () => {
           {daysList.map((day, index) => (
             <div 
               key={index}
-              className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm ${
+              className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm cursor-pointer ${
                 day.isPast ? 'opacity-50' : ''
               }`}
+              onClick={() => handleDayClick(day)}
             >
-              {day.date}
+              <div>{day.date}</div>
+              {day.kmsRun !== undefined && (
+                <div className="text-green-400">Run: {day.kmsRun}km</div>
+              )}
+              {day.kmsWalked !== undefined && (
+                <div className="text-blue-400">Walk: {day.kmsWalked}km</div>
+              )}
             </div>
           ))}
         </div>
+        <div className="mt-8 text-center">
+          <div className="text-xl font-bold mb-2">Total Distance</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-green-400">Total Run: {totalKmsRun}km</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-blue-400">Total Walk: {totalKmsWalked}km</div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Popup */}
+      {selectedDay && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-gray-800 p-6 rounded-lg w-96">
+            <h2 className="text-xl font-bold mb-4">{selectedDay.date}</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">KMs Run</label>
+                <input
+                  type="number"
+                  value={kmsRun}
+                  onChange={(e) => setKmsRun(e.target.value)}
+                  className="w-full bg-gray-700 rounded px-3 py-2"
+                  placeholder="Enter KMs run"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">KMs Walked</label>
+                <input
+                  type="number"
+                  value={kmsWalked}
+                  onChange={(e) => setKmsWalked(e.target.value)}
+                  className="w-full bg-gray-700 rounded px-3 py-2"
+                  placeholder="Enter KMs walked"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setSelectedDay(null)}
+                  className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
