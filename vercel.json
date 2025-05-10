@@ -1,44 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "rm -rf .next && rm -rf node_modules && npm install && next build",
+  "buildCommand": "next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/_next/static/(.*)",
-      "headers": {
-        "cache-control": "no-store, must-revalidate"
-      },
-      "continue": true
-    },
-    {
-      "src": "/static/(.*)",
-      "headers": {
-        "cache-control": "no-store, must-revalidate"
-      },
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "headers": {
-        "cache-control": "no-store, must-revalidate"
-      },
-      "dest": "/$1"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "framework": "nextjs"
 } 
