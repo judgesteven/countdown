@@ -14,6 +14,8 @@ const Countdown = () => {
   useEffect(() => {
     setMounted(true);
     const targetDate = new Date();
+    const currentYear = targetDate.getFullYear();
+    targetDate.setFullYear(currentYear);
     targetDate.setMonth(5); // June (0-based index)
     targetDate.setDate(7);
     targetDate.setHours(2, 0, 0, 0);
