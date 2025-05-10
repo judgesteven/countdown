@@ -19,6 +19,13 @@ const Countdown = () => {
     return cetDate;
   };
 
+  // Helper function to get start of day in CET+1
+  const getStartOfDay = (date: Date) => {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    return toCET(start);
+  };
+
   // Fixed start date: May 9th, 2025 at 2am CET+1
   const startTime = toCET(new Date(2025, 4, 9, 2, 0, 0)); // Month is 0-based, so 4 = May
   // Fixed end date: June 7th, 2025 at 2am CET+1
@@ -71,12 +78,10 @@ const Countdown = () => {
         // Update past days - only mark as past if we're past midnight of that day in CET+1
         setDaysList(prevDays => 
           prevDays.map(day => {
-            const dayDate = day.dateObj;
-            const midnight = toCET(new Date(dayDate));
-            midnight.setHours(0, 0, 0, 0);
+            const dayStart = getStartOfDay(day.dateObj);
             return {
               ...day,
-              isPast: now > midnight
+              isPast: now > dayStart
             };
           })
         );
