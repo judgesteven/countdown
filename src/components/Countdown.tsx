@@ -151,70 +151,19 @@ const Countdown = () => {
       <h1 className="text-4xl font-bold mb-8">Countdown until Finland</h1>
       <div className="w-[80vw] mb-8">
         <div className="flex items-center gap-4">
-          {/* Saudi Arabia Flag */}
-          <svg 
-            viewBox="0 0 900 600" 
+          {/* Saudi Arabia Flag - simple green with white sword */}
+          <svg
+            viewBox="0 0 24 24"
             className="w-6 h-6"
             xmlns="http://www.w3.org/2000/svg"
+            aria-label="Saudi Arabia flag"
           >
-            <rect width="900" height="600" fill="#006C35"/>
-            <path d="M450,300 L450,150 L500,150 L500,300 L450,300 Z" fill="#fff"/>
-            <path d="M400,300 L400,150 L450,150 L450,300 L400,300 Z" fill="#fff"/>
-            <path d="M350,300 L350,150 L400,150 L400,300 L350,300 Z" fill="#fff"/>
-            <path d="M300,300 L300,150 L350,150 L350,300 L300,300 Z" fill="#fff"/>
-            <path d="M250,300 L250,150 L300,150 L300,300 L250,300 Z" fill="#fff"/>
-            <path d="M200,300 L200,150 L250,150 L250,300 L200,300 Z" fill="#fff"/>
-            <path d="M150,300 L150,150 L200,150 L200,300 L150,300 Z" fill="#fff"/>
-            <path d="M100,300 L100,150 L150,150 L150,300 L100,300 Z" fill="#fff"/>
-            <path d="M50,300 L50,150 L100,150 L100,300 L50,300 Z" fill="#fff"/>
-            <path d="M0,300 L0,150 L50,150 L50,300 L0,300 Z" fill="#fff"/>
-            <path d="M500,300 L500,150 L550,150 L550,300 L500,300 Z" fill="#fff"/>
-            <path d="M550,300 L550,150 L600,150 L600,300 L550,300 Z" fill="#fff"/>
-            <path d="M600,300 L600,150 L650,150 L650,300 L600,300 Z" fill="#fff"/>
-            <path d="M650,300 L650,150 L700,150 L700,300 L650,300 Z" fill="#fff"/>
-            <path d="M700,300 L700,150 L750,150 L750,300 L700,300 Z" fill="#fff"/>
-            <path d="M750,300 L750,150 L800,150 L800,300 L750,300 Z" fill="#fff"/>
-            <path d="M800,300 L800,150 L850,150 L850,300 L800,300 Z" fill="#fff"/>
-            <path d="M850,300 L850,150 L900,150 L900,300 L850,300 Z" fill="#fff"/>
-            <path d="M450,450 L450,300 L500,300 L500,450 L450,450 Z" fill="#fff"/>
-            <path d="M400,450 L400,300 L450,300 L450,450 L400,450 Z" fill="#fff"/>
-            <path d="M350,450 L350,300 L400,300 L400,450 L350,450 Z" fill="#fff"/>
-            <path d="M300,450 L300,300 L350,300 L350,450 L300,450 Z" fill="#fff"/>
-            <path d="M250,450 L250,300 L300,300 L300,450 L250,450 Z" fill="#fff"/>
-            <path d="M200,450 L200,300 L250,300 L250,450 L200,450 Z" fill="#fff"/>
-            <path d="M150,450 L150,300 L200,300 L200,450 L150,450 Z" fill="#fff"/>
-            <path d="M100,450 L100,300 L150,300 L150,450 L100,450 Z" fill="#fff"/>
-            <path d="M50,450 L50,300 L100,300 L100,450 L50,450 Z" fill="#fff"/>
-            <path d="M0,450 L0,300 L50,300 L50,450 L0,450 Z" fill="#fff"/>
-            <path d="M500,450 L500,300 L550,300 L550,450 L500,450 Z" fill="#fff"/>
-            <path d="M550,450 L550,300 L600,300 L600,450 L550,450 Z" fill="#fff"/>
-            <path d="M600,450 L600,300 L650,300 L650,450 L600,450 Z" fill="#fff"/>
-            <path d="M650,450 L650,300 L700,300 L700,450 L650,450 Z" fill="#fff"/>
-            <path d="M700,450 L700,300 L750,300 L750,450 L700,450 Z" fill="#fff"/>
-            <path d="M750,450 L750,300 L800,300 L800,450 L750,450 Z" fill="#fff"/>
-            <path d="M800,450 L800,300 L850,300 L850,450 L800,450 Z" fill="#fff"/>
-            <path d="M850,450 L850,300 L900,300 L900,450 L850,450 Z" fill="#fff"/>
-            <path d="M450,600 L450,450 L500,450 L500,600 L450,600 Z" fill="#fff"/>
-            <path d="M400,600 L400,450 L450,450 L450,600 L400,600 Z" fill="#fff"/>
-            <path d="M350,600 L350,450 L400,450 L400,600 L350,600 Z" fill="#fff"/>
-            <path d="M300,600 L300,450 L350,450 L350,600 L300,600 Z" fill="#fff"/>
-            <path d="M250,600 L250,450 L300,450 L300,600 L250,600 Z" fill="#fff"/>
-            <path d="M200,600 L200,450 L250,450 L250,600 L200,600 Z" fill="#fff"/>
-            <path d="M150,600 L150,450 L200,450 L200,600 L150,600 Z" fill="#fff"/>
-            <path d="M100,600 L100,450 L150,450 L150,600 L100,600 Z" fill="#fff"/>
-            <path d="M50,600 L50,450 L100,450 L100,600 L50,600 Z" fill="#fff"/>
-            <path d="M0,600 L0,450 L50,450 L50,600 L0,600 Z" fill="#fff"/>
-            <path d="M500,600 L500,450 L550,450 L550,600 L500,600 Z" fill="#fff"/>
-            <path d="M550,600 L550,450 L600,450 L600,600 L550,600 Z" fill="#fff"/>
-            <path d="M600,600 L600,450 L650,450 L650,600 L600,600 Z" fill="#fff"/>
-            <path d="M650,600 L650,450 L700,450 L700,600 L650,600 Z" fill="#fff"/>
-            <path d="M700,600 L700,450 L750,450 L750,600 L700,600 Z" fill="#fff"/>
-            <path d="M750,600 L750,450 L800,450 L800,600 L750,600 Z" fill="#fff"/>
-            <path d="M800,600 L800,450 L850,450 L850,600 L800,600 Z" fill="#fff"/>
-            <path d="M850,600 L850,450 L900,450 L900,600 L850,600 Z" fill="#fff"/>
+            <rect width="24" height="24" fill="#006C35" rx="3"/>
+            <rect x="5" y="16" width="14" height="2" rx="1" fill="#fff"/>
+            <rect x="17" y="15.5" width="1.5" height="3" rx="0.75" fill="#fff"/>
           </svg>
           <div className="flex-1 bg-gray-700 rounded-full h-4 relative">
-            <div 
+            <div
               className="bg-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${progress}%` }}
             />
@@ -226,15 +175,16 @@ const Countdown = () => {
               />
             ))}
           </div>
-          {/* Finland Flag */}
-          <svg 
-            viewBox="0 0 900 600" 
+          {/* Finland Flag - white with blue cross */}
+          <svg
+            viewBox="0 0 24 24"
             className="w-6 h-6"
             xmlns="http://www.w3.org/2000/svg"
+            aria-label="Finland flag"
           >
-            <rect width="900" height="600" fill="#fff"/>
-            <rect x="300" width="60" height="600" fill="#003580"/>
-            <rect y="250" width="900" height="60" fill="#003580"/>
+            <rect width="24" height="24" fill="#fff" rx="3"/>
+            <rect x="9" width="3" height="24" fill="#003580"/>
+            <rect y="10" width="24" height="4" fill="#003580"/>
           </svg>
         </div>
       </div>
