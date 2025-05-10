@@ -2,8 +2,8 @@ import Countdown from '@/components/Countdown'
 
 export default function Home() {
   return (
-    <main>
+    <div className="min-h-screen bg-gray-900">
       <Countdown />
-    </main>
+    </div>
   )
 } 
