@@ -7,6 +7,14 @@ const nextConfig = {
   trailingSlash: true,
   output: 'export',
   distDir: 'dist',
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: '/',
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig 
