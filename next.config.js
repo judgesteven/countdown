@@ -6,12 +6,7 @@ const nextConfig = {
   compress: true,
   productionBrowserSourceMaps: false,
   swcMinify: true,
-  experimental: {
-    appDir: false
-  },
-  assetPrefix: '.',
-  basePath: '',
-  trailingSlash: true,
+  output: 'standalone'
 }
 
 module.exports = nextConfig 
