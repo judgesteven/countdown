@@ -11,7 +11,9 @@ const Countdown = () => {
   });
   const [progress, setProgress] = useState(0);
   const [daysList, setDaysList] = useState<{ date: string; isPast: boolean }[]>([]);
-  const [startTime] = useState(new Date());
+
+  // Fixed start date: May 9th, 2024 at midnight
+  const startTime = new Date(2024, 4, 9, 0, 0, 0); // Month is 0-based, so 4 = May
 
   useEffect(() => {
     setMounted(true);
@@ -70,7 +72,7 @@ const Countdown = () => {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [startTime]);
+  }, []);
 
   if (!mounted) {
     return (

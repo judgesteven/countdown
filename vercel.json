@@ -10,15 +10,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
+          "value": "no-store, must-revalidate"
         }
       ]
     }
@@ -28,5 +20,11 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "alias": ["countdown-judgesteven.vercel.app"]
 } 
