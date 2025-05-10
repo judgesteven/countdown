@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "rm -rf .next && next build",
+  "buildCommand": "rm -rf .next && rm -rf node_modules && npm install && next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",
@@ -14,19 +14,22 @@
     {
       "src": "/_next/static/(.*)",
       "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
+        "cache-control": "no-store, must-revalidate"
       },
       "continue": true
     },
     {
       "src": "/static/(.*)",
       "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
+        "cache-control": "no-store, must-revalidate"
       },
       "continue": true
     },
     {
       "src": "/(.*)",
+      "headers": {
+        "cache-control": "no-store, must-revalidate"
+      },
       "dest": "/$1"
     }
   ],
