@@ -5,6 +5,10 @@ const nextConfig = {
   generateEtags: true,
   compress: true,
   productionBrowserSourceMaps: false,
+  swcMinify: true,
+  experimental: {
+    appDir: false
+  },
   assetPrefix: '.',
   basePath: '',
   trailingSlash: true,
