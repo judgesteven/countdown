@@ -151,17 +151,8 @@ const Countdown = () => {
       <h1 className="text-4xl font-bold mb-8">Countdown until Finland</h1>
       <div className="w-[80vw] mb-8">
         <div className="flex items-center gap-4">
-          {/* Saudi Arabia Flag - simple green with white sword */}
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="Saudi Arabia flag"
-          >
-            <rect width="24" height="24" fill="#006C35" rx="3"/>
-            <rect x="5" y="16" width="14" height="2" rx="1" fill="#fff"/>
-            <rect x="17" y="15.5" width="1.5" height="3" rx="0.75" fill="#fff"/>
-          </svg>
+          {/* Saudi Arabia Flag */}
+          <img src="/Flag_of_Saudi_Arabia.svg.png" alt="Saudi Arabia flag" className="w-6 h-6" />
           <div className="flex-1 bg-gray-700 rounded-full h-4 relative">
             <div
               className="bg-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
@@ -175,17 +166,8 @@ const Countdown = () => {
               />
             ))}
           </div>
-          {/* Finland Flag - white with blue cross */}
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="Finland flag"
-          >
-            <rect width="24" height="24" fill="#fff" rx="3"/>
-            <rect x="9" width="3" height="24" fill="#003580"/>
-            <rect y="10" width="24" height="4" fill="#003580"/>
-          </svg>
+          {/* Finland Flag */}
+          <img src="/Flag_of_Finland.svg.png" alt="Finland flag" className="w-6 h-6" />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-8 text-center mb-12">
