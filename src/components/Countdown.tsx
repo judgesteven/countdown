@@ -10,7 +10,8 @@ const Countdown = () => {
     minutes: 0
   });
   const [progress, setProgress] = useState(0);
-  const [daysList, setDaysList] = useState<string[]>([]);
+  const [daysList, setDaysList] = useState<{ date: string; isPast: boolean }[]>([]);
+  const [startTime] = useState(new Date());
 
   useEffect(() => {
     setMounted(true);
@@ -21,18 +22,21 @@ const Countdown = () => {
     targetDate.setDate(7);
     targetDate.setHours(2, 0, 0, 0);
 
-    const startDate = new Date();
-    const totalHours = (targetDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+    const totalHours = (targetDate.getTime() - startTime.getTime()) / (1000 * 60 * 60);
 
     // Generate list of days
-    const days: string[] = [];
-    const currentDate = new Date();
+    const days: { date: string; isPast: boolean }[] = [];
+    const currentDate = new Date(startTime);
     while (currentDate < targetDate) {
-      days.push(currentDate.toLocaleDateString('en-US', { 
+      const dateString = currentDate.toLocaleDateString('en-US', { 
         weekday: 'long',
         month: 'long',
         day: 'numeric'
-      }));
+      });
+      days.push({
+        date: dateString,
+        isPast: currentDate < new Date()
+      });
       currentDate.setDate(currentDate.getDate() + 1);
     }
     setDaysList(days);
@@ -42,7 +46,7 @@ const Countdown = () => {
       const difference = targetDate.getTime() - now.getTime();
       
       if (difference > 0) {
-        const hoursElapsed = (now.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+        const hoursElapsed = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         const currentProgress = (hoursElapsed / totalHours) * 100;
         setProgress(Math.min(currentProgress, 100));
 
@@ -51,6 +55,14 @@ const Countdown = () => {
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60)
         });
+
+        // Update past days
+        setDaysList(prevDays => 
+          prevDays.map(day => ({
+            ...day,
+            isPast: new Date(day.date) < now
+          }))
+        );
       }
     };
 
@@ -58,7 +70,7 @@ const Countdown = () => {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [startTime]);
 
   if (!mounted) {
     return (
@@ -102,14 +114,15 @@ const Countdown = () => {
         </div>
       </div>
       <div className="w-[80vw]">
-        <h2 className="text-2xl font-bold mb-4">Days Until Finland</h2>
         <div className="grid grid-cols-7 gap-2">
           {daysList.map((day, index) => (
             <div 
               key={index}
-              className="bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm"
+              className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm ${
+                day.isPast ? 'opacity-50' : ''
+              }`}
             >
-              {day}
+              {day.date}
             </div>
           ))}
         </div>
