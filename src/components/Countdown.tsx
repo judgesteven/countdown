@@ -14,22 +14,18 @@ const Countdown = () => {
 
   // Fixed start date: May 9th, 2024 at midnight
   const startTime = new Date(2024, 4, 9, 0, 0, 0); // Month is 0-based, so 4 = May
+  // Fixed end date: June 7th, 2024 at 2am
+  const endTime = new Date(2024, 5, 7, 2, 0, 0); // Month is 0-based, so 5 = June
 
   useEffect(() => {
     setMounted(true);
-    const targetDate = new Date();
-    const currentYear = targetDate.getFullYear();
-    targetDate.setFullYear(currentYear);
-    targetDate.setMonth(5); // June (0-based index)
-    targetDate.setDate(7);
-    targetDate.setHours(2, 0, 0, 0);
 
-    const totalHours = (targetDate.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    const totalHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
 
-    // Generate list of days
+    // Generate list of days between start and end dates
     const days: { date: string; isPast: boolean }[] = [];
     const currentDate = new Date(startTime);
-    while (currentDate < targetDate) {
+    while (currentDate <= endTime) {
       const dateString = currentDate.toLocaleDateString('en-US', { 
         weekday: 'long',
         month: 'long',
@@ -45,7 +41,7 @@ const Countdown = () => {
 
     const calculateTimeLeft = () => {
       const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
+      const difference = endTime.getTime() - now.getTime();
       
       if (difference > 0) {
         const hoursElapsed = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
@@ -65,6 +61,10 @@ const Countdown = () => {
             isPast: new Date(day.date) < now
           }))
         );
+      } else {
+        // If we've passed the end date, set progress to 100%
+        setProgress(100);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
       }
     };
 
