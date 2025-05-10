@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 const Countdown = () => {
+  const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -11,6 +12,7 @@ const Countdown = () => {
   });
 
   useEffect(() => {
+    setMounted(true);
     const targetDate = new Date();
     targetDate.setMonth(6); // July (0-based index)
     targetDate.setDate(7);
@@ -34,6 +36,14 @@ const Countdown = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+        <h1 className="text-4xl font-bold mb-8">Loading...</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
