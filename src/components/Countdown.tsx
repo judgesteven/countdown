@@ -15,9 +15,8 @@ const Countdown = () => {
 
   // Helper function to convert to CET+1
   const toCET = (date: Date) => {
-    const cetDate = new Date(date);
-    cetDate.setHours(cetDate.getHours() + 1); // Add 1 hour for CET+1
-    return cetDate;
+    // No need to add an hour since we're using Europe/Paris timezone
+    return new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
   };
 
   // Helper function to get start of day in CET+1
