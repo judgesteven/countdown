@@ -210,7 +210,7 @@ const Countdown = () => {
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-white px-4">
-      <h1 className="text-4xl font-bold mb-8">Countdown until Finland</h1>
+      <h1 className="text-4xl font-bold mb-8">Countdown to Finland</h1>
       <div className="w-[80vw] mb-8">
         <div className="flex items-center gap-4">
           {/* Saudi Arabia Flag */}
@@ -267,7 +267,7 @@ const Countdown = () => {
           ))}
         </div>
         <div className="mt-8 text-center">
-          <div className="text-xl font-bold mb-2">Total Distance</div>
+          <div className="text-xl font-bold mb-2">Workout Data</div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-green-400">Total Run: {totalKmsRun}km</div>
