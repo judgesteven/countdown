@@ -89,18 +89,25 @@ const Countdown = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Load saved distances from localStorage
-    const savedDistances = localStorage.getItem('finlandDistances');
-    if (savedDistances) {
-      const distances = JSON.parse(savedDistances);
-      days.forEach(day => {
-        if (distances[day.date]) {
-          day.kmsRun = distances[day.date].kmsRun;
-          day.kmsWalked = distances[day.date].kmsWalked;
+    // Load saved distances from API
+    const loadDistances = async () => {
+      try {
+        const response = await fetch('/api/distances');
+        if (response.ok) {
+          const distances = await response.json();
+          days.forEach(day => {
+            if (distances[day.date]) {
+              day.kmsRun = distances[day.date].kmsRun;
+              day.kmsWalked = distances[day.date].kmsWalked;
+            }
+          });
         }
-      });
-    }
+      } catch (error) {
+        console.error('Failed to load distances:', error);
+      }
+    };
 
+    loadDistances();
     setDaysList(days);
 
     const calculateTimeLeft = () => {
@@ -181,7 +188,7 @@ const Countdown = () => {
       );
       setDaysList(updatedDays);
 
-      // Save to localStorage
+      // Save to API
       const distances: Record<string, { kmsRun?: number; kmsWalked?: number }> = {};
       updatedDays.forEach(day => {
         if (day.kmsRun !== undefined || day.kmsWalked !== undefined) {
@@ -191,9 +198,19 @@ const Countdown = () => {
           };
         }
       });
-      localStorage.setItem('finlandDistances', JSON.stringify(distances));
-
-      setSelectedDay(null);
+      fetch('/api/distances', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(distances)
+      }).then(response => {
+        if (response.ok) {
+          setSelectedDay(null);
+        }
+      }).catch(error => {
+        console.error('Failed to save distances:', error);
+      });
     }
   };
 
