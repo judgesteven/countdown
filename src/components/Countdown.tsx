@@ -246,15 +246,15 @@ const Countdown = () => {
       </div>
       <div className="grid grid-cols-3 gap-8 text-center mb-12">
         <div className="flex flex-col">
-          <span className="text-6xl font-bold">{timeLeft.days}</span>
+          <span className="text-8xl font-bold">{timeLeft.days}</span>
           <span className="text-xl">Days</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-6xl font-bold">{timeLeft.hours}</span>
+          <span className="text-8xl font-bold">{timeLeft.hours}</span>
           <span className="text-xl">Hours</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-6xl font-bold">{timeLeft.minutes}</span>
+          <span className="text-8xl font-bold">{timeLeft.minutes}</span>
           <span className="text-xl">Minutes</span>
         </div>
       </div>
