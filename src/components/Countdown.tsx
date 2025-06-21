@@ -214,6 +214,13 @@ const Countdown = () => {
   const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
   const totalKmsWalked = daysList.reduce((sum, day) => sum + (day.kmsWalked || 0), 0);
 
+  // Weight data calculations
+  const startWeight = daysList[0]?.weight;
+  const currentWeight = daysList[daysList.length - 1]?.weight;
+  const weightChange = startWeight !== undefined && currentWeight !== undefined 
+    ? (currentWeight - startWeight).toFixed(1) 
+    : null;
+
   if (!mounted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-white">
@@ -305,21 +312,17 @@ const Countdown = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Starting Weight: {daysList[0]?.weight !== undefined ? daysList[0]!.weight.toFixed(1) : 'Not set'}kg
+                Starting Weight: {daysList[0]?.weight !== undefined ? daysList[0].weight.toFixed(1) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Current Weight: {daysList[daysList.length - 1]?.weight !== undefined ? daysList[daysList.length - 1]!.weight.toFixed(1) : 'Not set'}kg
+                Current Weight: {daysList[daysList.length - 1]?.weight !== undefined ? daysList[daysList.length - 1].weight.toFixed(1) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Change: {
-                  daysList[0]?.weight !== undefined && daysList[daysList.length - 1]?.weight !== undefined
-                    ? `${(daysList[daysList.length - 1]!.weight - daysList[0]!.weight).toFixed(1)}kg`
-                    : 'Not available'
-                }
+                Change: {weightChange ? `${weightChange}kg` : 'Not available'}
               </div>
             </div>
           </div>
