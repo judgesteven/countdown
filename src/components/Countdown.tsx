@@ -53,10 +53,10 @@ const Countdown = () => {
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: Saturday 21st June, 2025 at midnight CET+1
-  const startTime = toCET(new Date(2025, 5, 21, 0, 0, 0)); // Month is 0-based, so 5 = June
-  // Fixed end date: Saturday 5th July, 2025 at midnight CET+1
-  const endTime = toCET(new Date(2025, 6, 5, 0, 0, 0)); // Month is 0-based, so 6 = July
+  // Fixed start date: Saturday 21st June, 2025 at 01:00 CET+1
+  const startTime = toCET(new Date(2025, 5, 21, 1, 0, 0)); // Month is 0-based, so 5 = June
+  // Fixed end date: Saturday 5th July, 2025 at 01:00 CET+1
+  const endTime = toCET(new Date(2025, 6, 5, 1, 0, 0)); // Month is 0-based, so 6 = July
 
   useEffect(() => {
     setMounted(true);
