@@ -8,6 +8,7 @@ interface DayData {
   dateObj: Date;
   kmsRun?: number;
   kmsWalked?: number;
+  weight?: number;
 }
 
 const Countdown = () => {
@@ -23,6 +24,7 @@ const Countdown = () => {
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [kmsRun, setKmsRun] = useState('');
   const [kmsWalked, setKmsWalked] = useState('');
+  const [weight, setWeight] = useState('');
 
   // Helper function to convert to CET+1
   const toCET = (date: Date) => {
@@ -89,7 +91,7 @@ const Countdown = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Load saved distances from localStorage
+    // Load saved distances and weight from localStorage
     const loadDistances = () => {
       try {
         const savedDistances = localStorage.getItem('workout-distances');
@@ -99,6 +101,7 @@ const Countdown = () => {
             if (distances[day.date]) {
               day.kmsRun = distances[day.date].kmsRun;
               day.kmsWalked = distances[day.date].kmsWalked;
+              day.weight = distances[day.date].weight;
             }
           });
         }
@@ -173,6 +176,7 @@ const Countdown = () => {
     setSelectedDay(day);
     setKmsRun(day.kmsRun?.toString() || '');
     setKmsWalked(day.kmsWalked?.toString() || '');
+    setWeight(day.weight?.toString() || '');
   };
 
   const handleSubmit = () => {
@@ -182,19 +186,21 @@ const Countdown = () => {
           ? {
               ...day,
               kmsRun: kmsRun ? parseFloat(kmsRun) : undefined,
-              kmsWalked: kmsWalked ? parseFloat(kmsWalked) : undefined
+              kmsWalked: kmsWalked ? parseFloat(kmsWalked) : undefined,
+              weight: weight ? parseFloat(weight) : undefined
             }
           : day
       );
       setDaysList(updatedDays);
 
       // Save to localStorage
-      const distances: Record<string, { kmsRun?: number; kmsWalked?: number }> = {};
+      const distances: Record<string, { kmsRun?: number; kmsWalked?: number; weight?: number }> = {};
       updatedDays.forEach(day => {
-        if (day.kmsRun !== undefined || day.kmsWalked !== undefined) {
+        if (day.kmsRun !== undefined || day.kmsWalked !== undefined || day.weight !== undefined) {
           distances[day.date] = {
             kmsRun: day.kmsRun,
-            kmsWalked: day.kmsWalked
+            kmsWalked: day.kmsWalked,
+            weight: day.weight
           };
         }
       });
@@ -275,6 +281,9 @@ const Countdown = () => {
               {day.kmsWalked !== undefined && (
                 <div className="text-blue-400">Walk: {day.kmsWalked}km</div>
               )}
+              {day.weight !== undefined && (
+                <div className="text-yellow-400">Weight: {day.weight}kg</div>
+              )}
             </div>
           ))}
         </div>
@@ -286,6 +295,28 @@ const Countdown = () => {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-blue-400">Total Walk: {totalKmsWalked}km</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Weight Data Section */}
+        <div className="mt-8 text-center">
+          <div className="text-xl font-bold mb-2">Weight Data</div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-yellow-400">Starting Weight: {daysList[0]?.weight || 'Not set'}kg</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-yellow-400">Current Weight: {daysList[daysList.length - 1]?.weight || 'Not set'}kg</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-yellow-400">
+                Change: {
+                  daysList[0]?.weight && daysList[daysList.length - 1]?.weight 
+                    ? `${((daysList[daysList.length - 1]?.weight || 0) - (daysList[0]?.weight || 0)).toFixed(1)}kg`
+                    : 'Not available'
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -315,6 +346,16 @@ const Countdown = () => {
                   onChange={(e) => setKmsWalked(e.target.value)}
                   className="w-full bg-gray-700 rounded px-3 py-2"
                   placeholder="Enter KMs walked"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Weight (kg)</label>
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="w-full bg-gray-700 rounded px-3 py-2"
+                  placeholder="Enter weight in kg"
                 />
               </div>
               <div className="flex justify-end space-x-2">
