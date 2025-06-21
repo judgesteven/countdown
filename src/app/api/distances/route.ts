@@ -1,42 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
-const dataFilePath = path.join(process.cwd(), 'data', 'distances.json');
-
-// Ensure data directory exists
-async function ensureDataDirectory() {
-  const dataDir = path.join(process.cwd(), 'data');
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-}
+const DISTANCES_KEY = 'workout_distances';
 
 // GET - Read distances
 export async function GET() {
   try {
-    await ensureDataDirectory();
+    // Try to get data from Vercel KV
+    const distances = await kv.get(DISTANCES_KEY);
     
-    try {
-      const data = await fs.readFile(dataFilePath, 'utf-8');
-      const distances = JSON.parse(data);
+    if (distances) {
       return NextResponse.json(distances);
-    } catch (error) {
-      // If file doesn't exist, return empty object
+    } else {
+      // Return empty object if no data exists
       return NextResponse.json({});
     }
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to read distances' }, { status: 500 });
+    console.error('Failed to read distances from KV:', error);
+    // Return empty object on error
+    return NextResponse.json({});
   }
 }
 
 // POST - Save distances
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataDirectory();
-    
     const distances = await request.json();
     
     // Validate the data structure
@@ -44,10 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
     }
     
-    await fs.writeFile(dataFilePath, JSON.stringify(distances, null, 2));
+    // Save to Vercel KV
+    await kv.set(DISTANCES_KEY, distances);
     
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Failed to save distances to KV:', error);
     return NextResponse.json({ error: 'Failed to save distances' }, { status: 500 });
   }
 } 

@@ -198,6 +198,7 @@ const Countdown = () => {
           };
         }
       });
+      
       fetch('/api/distances', {
         method: 'POST',
         headers: {
@@ -207,9 +208,14 @@ const Countdown = () => {
       }).then(response => {
         if (response.ok) {
           setSelectedDay(null);
+          console.log('Workout data saved successfully!');
+        } else {
+          console.error('Failed to save workout data');
+          alert('Failed to save workout data. Please try again.');
         }
       }).catch(error => {
         console.error('Failed to save distances:', error);
+        alert('Failed to save workout data. Please try again.');
       });
     }
   };
