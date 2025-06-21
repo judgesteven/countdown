@@ -63,4 +63,6 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/distances: General error', { error });
     return NextResponse.json({ error: 'Failed to save distances (general error)' }, { status: 500 });
   }
-} 
+}
+
+// Trigger Vercel redeploy: trivial comment 
