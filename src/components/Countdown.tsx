@@ -53,10 +53,10 @@ const Countdown = () => {
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: May 9th, 2025 at 2am CET+1
-  const startTime = toCET(new Date(2025, 4, 9, 2, 0, 0)); // Month is 0-based, so 4 = May
-  // Fixed end date: June 7th, 2025 at 2am CET+1
-  const endTime = toCET(new Date(2025, 5, 7, 2, 0, 0)); // Month is 0-based, so 5 = June
+  // Fixed start date: Saturday 21st June, 2025 at midnight CET+1
+  const startTime = toCET(new Date(2025, 5, 21, 0, 0, 0)); // Month is 0-based, so 5 = June
+  // Fixed end date: Saturday 5th July, 2025 at midnight CET+1
+  const endTime = toCET(new Date(2025, 6, 5, 0, 0, 0)); // Month is 0-based, so 6 = July
 
   useEffect(() => {
     setMounted(true);
@@ -210,11 +210,11 @@ const Countdown = () => {
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-white px-4">
-      <h1 className="text-4xl font-bold mb-8">Countdown to Finland</h1>
+      <h1 className="text-4xl font-bold mb-8">The Great Escape</h1>
       <div className="w-[80vw] mb-8">
         <div className="flex items-center gap-4">
           {/* Saudi Arabia Flag */}
-          <img src="/Flag_of_Saudi_Arabia.svg.png" alt="Saudi Arabia flag" className="w-6 h-6" />
+          <img src="/Flag_of_Saudi_Arabia.svg.png" alt="Saudi Arabia flag" className="w-8 h-8" />
           <div className="flex-1 bg-gray-700 rounded-full h-4 relative">
             <div
               className="bg-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
@@ -229,7 +229,11 @@ const Countdown = () => {
             ))}
           </div>
           {/* Finland Flag */}
-          <img src="/Flag_of_Finland.svg.png" alt="Finland flag" className="w-6 h-6" />
+          <img src="/Flag_of_UK.png" alt="UK flag" className="w-8 h-8" />
+          {/* Spain Flag */}
+          <img src="/Flag_of_Spain.png" alt="Spain flag" className="w-8 h-8" />
+          {/* Finland Flag */}
+          <img src="/Flag_of_Finland_new.png" alt="Finland flag" className="w-8 h-8" />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-8 text-center mb-12">
