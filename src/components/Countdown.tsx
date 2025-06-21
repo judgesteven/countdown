@@ -89,12 +89,12 @@ const Countdown = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Load saved distances from API
-    const loadDistances = async () => {
+    // Load saved distances from localStorage
+    const loadDistances = () => {
       try {
-        const response = await fetch('/api/distances');
-        if (response.ok) {
-          const distances = await response.json();
+        const savedDistances = localStorage.getItem('workout-distances');
+        if (savedDistances) {
+          const distances = JSON.parse(savedDistances);
           days.forEach(day => {
             if (distances[day.date]) {
               day.kmsRun = distances[day.date].kmsRun;
@@ -103,7 +103,7 @@ const Countdown = () => {
           });
         }
       } catch (error) {
-        console.error('Failed to load distances:', error);
+        console.error('Failed to load distances from localStorage:', error);
       }
     };
 
@@ -188,7 +188,7 @@ const Countdown = () => {
       );
       setDaysList(updatedDays);
 
-      // Save to API
+      // Save to localStorage
       const distances: Record<string, { kmsRun?: number; kmsWalked?: number }> = {};
       updatedDays.forEach(day => {
         if (day.kmsRun !== undefined || day.kmsWalked !== undefined) {
@@ -199,24 +199,9 @@ const Countdown = () => {
         }
       });
       
-      fetch('/api/distances', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(distances)
-      }).then(response => {
-        if (response.ok) {
-          setSelectedDay(null);
-          console.log('Workout data saved successfully!');
-        } else {
-          console.error('Failed to save workout data');
-          alert('Failed to save workout data. Please try again.');
-        }
-      }).catch(error => {
-        console.error('Failed to save distances:', error);
-        alert('Failed to save workout data. Please try again.');
-      });
+      localStorage.setItem('workout-distances', JSON.stringify(distances));
+      setSelectedDay(null);
+      console.log('Workout data saved successfully!');
     }
   };
 
