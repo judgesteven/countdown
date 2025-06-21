@@ -276,13 +276,13 @@ const Countdown = () => {
             >
               <div>{day.date}</div>
               {day.kmsRun !== undefined && (
-                <div className="text-green-400">Run: {day.kmsRun}km</div>
+                <div className="text-green-400">Run: {day.kmsRun.toFixed(1)}km</div>
               )}
               {day.kmsWalked !== undefined && (
-                <div className="text-blue-400">Walk: {day.kmsWalked}km</div>
+                <div className="text-blue-400">Walk: {day.kmsWalked.toFixed(1)}km</div>
               )}
               {day.weight !== undefined && (
-                <div className="text-yellow-400">Weight: {day.weight}kg</div>
+                <div className="text-yellow-400">Weight: {day.weight.toFixed(1)}kg</div>
               )}
             </div>
           ))}
@@ -291,10 +291,10 @@ const Countdown = () => {
           <div className="text-xl font-bold mb-2">Workout Data</div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-green-400">Total Run: {totalKmsRun}km</div>
+              <div className="text-green-400">Total Run: {totalKmsRun.toFixed(1)}km</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-blue-400">Total Walk: {totalKmsWalked}km</div>
+              <div className="text-blue-400">Total Walk: {totalKmsWalked.toFixed(1)}km</div>
             </div>
           </div>
         </div>
@@ -304,16 +304,20 @@ const Countdown = () => {
           <div className="text-xl font-bold mb-2">Weight Data</div>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">Starting Weight: {daysList[0]?.weight || 'Not set'}kg</div>
+              <div className="text-yellow-400">
+                Starting Weight: {daysList[0]?.weight !== undefined ? daysList[0]!.weight.toFixed(1) : 'Not set'}kg
+              </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">Current Weight: {daysList[daysList.length - 1]?.weight || 'Not set'}kg</div>
+              <div className="text-yellow-400">
+                Current Weight: {daysList[daysList.length - 1]?.weight !== undefined ? daysList[daysList.length - 1]!.weight.toFixed(1) : 'Not set'}kg
+              </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
                 Change: {
-                  daysList[0]?.weight && daysList[daysList.length - 1]?.weight 
-                    ? `${((daysList[daysList.length - 1]?.weight || 0) - (daysList[0]?.weight || 0)).toFixed(1)}kg`
+                  daysList[0]?.weight !== undefined && daysList[daysList.length - 1]?.weight !== undefined
+                    ? `${(daysList[daysList.length - 1]!.weight - daysList[0]!.weight).toFixed(1)}kg`
                     : 'Not available'
                 }
               </div>
