@@ -4,16 +4,14 @@ import { put, list } from '@vercel/blob';
 const BLOB_FILENAME = 'workout-distances.json';
 
 // Debug: Check if environment variable is loaded
-console.log('BLOB_TOKEN exists:', !!process.env.BLOB_TOKEN);
-console.log('BLOB_TOKEN length:', process.env.BLOB_TOKEN?.length);
+console.log('BLOB_READ_WRITE_TOKEN exists:', !!process.env.BLOB_READ_WRITE_TOKEN);
+console.log('BLOB_READ_WRITE_TOKEN length:', process.env.BLOB_READ_WRITE_TOKEN?.length);
 
 // GET - Read distances
 export async function GET() {
   try {
     // Try to get data from Vercel Blob
-    const { blobs } = await list({
-      token: process.env.BLOB_TOKEN
-    });
+    const { blobs } = await list();
     const existingBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
     
     if (existingBlob) {
@@ -50,8 +48,7 @@ export async function POST(request: NextRequest) {
     try {
       await put(BLOB_FILENAME, jsonData, {
         access: 'public',
-        addRandomSuffix: false,
-        token: process.env.BLOB_TOKEN
+        addRandomSuffix: false
       });
     } catch (putError) {
       console.error('POST /api/distances: Error in put()', { putError, jsonData });
