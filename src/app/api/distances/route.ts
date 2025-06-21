@@ -11,7 +11,9 @@ console.log('BLOB_READ_WRITE_TOKEN length:', process.env.BLOB_READ_WRITE_TOKEN?.
 export async function GET() {
   try {
     // Try to get data from Vercel Blob
-    const { blobs } = await list();
+    const { blobs } = await list({
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
     const existingBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
     
     if (existingBlob) {
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
     try {
       await put(BLOB_FILENAME, jsonData, {
         access: 'public',
-        addRandomSuffix: false
+        addRandomSuffix: false,
+        token: process.env.BLOB_READ_WRITE_TOKEN
       });
     } catch (putError) {
       console.error('POST /api/distances: Error in put()', { putError, jsonData });
