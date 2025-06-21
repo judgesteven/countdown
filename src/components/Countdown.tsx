@@ -312,12 +312,12 @@ const Countdown = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Starting Weight: {daysList[0]?.weight !== undefined ? daysList[0].weight.toFixed(1) : 'Not set'}kg
+                Starting Weight: {startWeight !== undefined ? startWeight.toFixed(1) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Current Weight: {daysList[daysList.length - 1]?.weight !== undefined ? daysList[daysList.length - 1].weight.toFixed(1) : 'Not set'}kg
+                Current Weight: {currentWeight !== undefined ? currentWeight.toFixed(1) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
