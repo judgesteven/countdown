@@ -3,11 +3,17 @@ import { put, list } from '@vercel/blob';
 
 const BLOB_FILENAME = 'workout-distances.json';
 
+// Debug: Check if environment variable is loaded
+console.log('BLOB_TOKEN exists:', !!process.env.BLOB_TOKEN);
+console.log('BLOB_TOKEN length:', process.env.BLOB_TOKEN?.length);
+
 // GET - Read distances
 export async function GET() {
   try {
     // Try to get data from Vercel Blob
-    const { blobs } = await list();
+    const { blobs } = await list({
+      token: process.env.BLOB_TOKEN
+    });
     const existingBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
     
     if (existingBlob) {
@@ -33,6 +39,7 @@ export async function POST(request: NextRequest) {
     
     // Validate the data structure
     if (typeof distances !== 'object' || distances === null) {
+      console.error('POST /api/distances: Invalid data format', { received: distances });
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
     }
     
@@ -40,14 +47,20 @@ export async function POST(request: NextRequest) {
     const jsonData = JSON.stringify(distances, null, 2);
     
     // Save to Vercel Blob
-    await put(BLOB_FILENAME, jsonData, {
-      access: 'public',
-      addRandomSuffix: false
-    });
+    try {
+      await put(BLOB_FILENAME, jsonData, {
+        access: 'public',
+        addRandomSuffix: false,
+        token: process.env.BLOB_TOKEN
+      });
+    } catch (putError) {
+      console.error('POST /api/distances: Error in put()', { putError, jsonData });
+      return NextResponse.json({ error: 'Failed to save distances (put error)' }, { status: 500 });
+    }
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Failed to save distances to Blob:', error);
-    return NextResponse.json({ error: 'Failed to save distances' }, { status: 500 });
+    console.error('POST /api/distances: General error', { error });
+    return NextResponse.json({ error: 'Failed to save distances (general error)' }, { status: 500 });
   }
 } 
