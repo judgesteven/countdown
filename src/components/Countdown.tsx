@@ -214,9 +214,10 @@ const Countdown = () => {
   const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
   const totalKmsWalked = daysList.reduce((sum, day) => sum + (day.kmsWalked || 0), 0);
 
-  // Weight data calculations
+  // Weight data calculations - find most recent weight entry
   const startWeight = daysList[0]?.weight;
-  const currentWeight = daysList[daysList.length - 1]?.weight;
+  const weightEntries = daysList.filter(day => day.weight !== undefined);
+  const currentWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : undefined;
   const weightChange = startWeight !== undefined && currentWeight !== undefined 
     ? (currentWeight - startWeight).toFixed(1) 
     : null;
