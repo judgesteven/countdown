@@ -219,7 +219,7 @@ const Countdown = () => {
   const weightEntries = daysList.filter(day => day.weight !== undefined);
   const currentWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : undefined;
   const weightChange = startWeight !== undefined && currentWeight !== undefined 
-    ? (currentWeight - startWeight).toFixed(1) 
+    ? (currentWeight - startWeight).toFixed(2) 
     : null;
 
   if (!mounted) {
@@ -290,7 +290,7 @@ const Countdown = () => {
                 <div className="text-blue-400">Walk: {day.kmsWalked.toFixed(1)}km</div>
               )}
               {day.weight !== undefined && (
-                <div className="text-yellow-400">Weight: {day.weight.toFixed(1)}kg</div>
+                <div className="text-yellow-400">Weight: {day.weight.toFixed(2)}kg</div>
               )}
             </div>
           ))}
@@ -313,12 +313,12 @@ const Countdown = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Starting Weight: {startWeight !== undefined ? startWeight.toFixed(1) : 'Not set'}kg
+                Starting Weight: {startWeight !== undefined ? startWeight.toFixed(2) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Current Weight: {currentWeight !== undefined ? currentWeight.toFixed(1) : 'Not set'}kg
+                Current Weight: {currentWeight !== undefined ? currentWeight.toFixed(2) : 'Not set'}kg
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
