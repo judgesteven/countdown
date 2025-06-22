@@ -8,6 +8,7 @@ interface DayData {
   dateObj: Date;
   kmsRun?: number;
   kmsWalked?: number;
+  steps?: number;
   weight?: number;
 }
 
@@ -24,6 +25,7 @@ const Countdown = () => {
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [kmsRun, setKmsRun] = useState('');
   const [kmsWalked, setKmsWalked] = useState('');
+  const [steps, setSteps] = useState('');
   const [weight, setWeight] = useState('');
 
   // Helper function to convert to CET+1
@@ -91,7 +93,7 @@ const Countdown = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Load saved distances and weight from localStorage
+    // Load saved distances, steps and weight from localStorage
     const loadDistances = () => {
       try {
         const savedDistances = localStorage.getItem('workout-distances');
@@ -101,6 +103,7 @@ const Countdown = () => {
             if (distances[day.date]) {
               day.kmsRun = distances[day.date].kmsRun;
               day.kmsWalked = distances[day.date].kmsWalked;
+              day.steps = distances[day.date].steps;
               day.weight = distances[day.date].weight;
             }
           });
@@ -176,6 +179,7 @@ const Countdown = () => {
     setSelectedDay(day);
     setKmsRun(day.kmsRun?.toString() || '');
     setKmsWalked(day.kmsWalked?.toString() || '');
+    setSteps(day.steps?.toString() || '');
     setWeight(day.weight?.toString() || '');
   };
 
@@ -187,6 +191,7 @@ const Countdown = () => {
               ...day,
               kmsRun: kmsRun ? parseFloat(kmsRun) : undefined,
               kmsWalked: kmsWalked ? parseFloat(kmsWalked) : undefined,
+              steps: steps ? parseInt(steps) : undefined,
               weight: weight ? parseFloat(weight) : undefined
             }
           : day
@@ -194,12 +199,13 @@ const Countdown = () => {
       setDaysList(updatedDays);
 
       // Save to localStorage
-      const distances: Record<string, { kmsRun?: number; kmsWalked?: number; weight?: number }> = {};
+      const distances: Record<string, { kmsRun?: number; kmsWalked?: number; steps?: number; weight?: number }> = {};
       updatedDays.forEach(day => {
-        if (day.kmsRun !== undefined || day.kmsWalked !== undefined || day.weight !== undefined) {
+        if (day.kmsRun !== undefined || day.kmsWalked !== undefined || day.steps !== undefined || day.weight !== undefined) {
           distances[day.date] = {
             kmsRun: day.kmsRun,
             kmsWalked: day.kmsWalked,
+            steps: day.steps,
             weight: day.weight
           };
         }
@@ -213,6 +219,7 @@ const Countdown = () => {
 
   const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
   const totalKmsWalked = daysList.reduce((sum, day) => sum + (day.kmsWalked || 0), 0);
+  const totalSteps = daysList.reduce((sum, day) => sum + (day.steps || 0), 0);
 
   // Weight data calculations - find most recent weight entry
   const startWeight = daysList[0]?.weight;
@@ -289,6 +296,9 @@ const Countdown = () => {
               {day.kmsWalked !== undefined && (
                 <div className="text-blue-400">Walk: {day.kmsWalked.toFixed(1)}km</div>
               )}
+              {day.steps !== undefined && (
+                <div className="text-purple-400">Steps: {day.steps.toLocaleString()}</div>
+              )}
               {day.weight !== undefined && (
                 <div className="text-yellow-400">Weight: {day.weight.toFixed(2)}kg</div>
               )}
@@ -297,12 +307,15 @@ const Countdown = () => {
         </div>
         <div className="mt-8 text-center">
           <div className="text-xl font-bold mb-2">Workout Data</div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-green-400">Total Run: {totalKmsRun.toFixed(1)}km</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-blue-400">Total Walk: {totalKmsWalked.toFixed(1)}km</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-purple-400">Total Steps: {totalSteps.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -354,6 +367,16 @@ const Countdown = () => {
                   onChange={(e) => setKmsWalked(e.target.value)}
                   className="w-full bg-gray-700 rounded px-3 py-2"
                   placeholder="Enter KMs walked"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Steps</label>
+                <input
+                  type="number"
+                  value={steps}
+                  onChange={(e) => setSteps(e.target.value)}
+                  className="w-full bg-gray-700 rounded px-3 py-2"
+                  placeholder="Enter number of steps"
                 />
               </div>
               <div>
