@@ -228,6 +228,12 @@ const Countdown = () => {
   const weightChange = startWeight !== undefined && currentWeight !== undefined 
     ? (currentWeight - startWeight).toFixed(2) 
     : null;
+  
+  // Target weight and "Still To Go" calculation
+  const targetWeight = 85.00;
+  const stillToGo = currentWeight !== undefined 
+    ? (currentWeight - targetWeight).toFixed(2) 
+    : null;
 
   if (!mounted) {
     return (
@@ -323,7 +329,7 @@ const Countdown = () => {
         {/* Weight Data Section */}
         <div className="mt-8 text-center">
           <div className="text-xl font-bold mb-2">Weight Data</div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
                 Starting Weight: {startWeight !== undefined ? startWeight.toFixed(2) : 'Not set'}kg
@@ -336,7 +342,12 @@ const Countdown = () => {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
-                Change: {weightChange ? `${weightChange}kg` : 'Not available'}
+                Target Weight: {targetWeight.toFixed(2)}kg
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-yellow-400">
+                Still To Go: {stillToGo ? `${stillToGo}kg` : 'Not available'}
               </div>
             </div>
           </div>
