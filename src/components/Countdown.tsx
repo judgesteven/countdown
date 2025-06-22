@@ -329,7 +329,7 @@ const Countdown = () => {
         {/* Weight Data Section */}
         <div className="mt-8 text-center">
           <div className="text-xl font-bold mb-2">Weight Data</div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
                 Starting Weight: {startWeight !== undefined ? startWeight.toFixed(2) : 'Not set'}kg
@@ -343,6 +343,11 @@ const Countdown = () => {
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="text-yellow-400">
                 Target Weight: {targetWeight.toFixed(2)}kg
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <div className="text-yellow-400">
+                Difference: {weightChange ? `${weightChange}kg` : 'Not available'}
               </div>
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
