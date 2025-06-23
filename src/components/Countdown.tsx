@@ -263,8 +263,6 @@ const Countdown = () => {
               />
             ))}
           </div>
-          {/* Finland Flag */}
-          <img src="/Flag_of_UK.png" alt="UK flag" className="w-8 h-8" />
           {/* Spain Flag */}
           <img src="/Flag_of_Spain.png" alt="Spain flag" className="w-8 h-8" />
           {/* Finland Flag */}
