@@ -210,7 +210,7 @@ const Countdown = () => {
   const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
 
   // Weight data calculations - find most recent weight entry
-  const startWeight = daysList[0]?.weight;
+  const startWeight = daysList[0]?.weight || 89.5; // Default starting weight is 89.5kg
   const weightEntries = daysList.filter(day => day.weight !== undefined);
   const currentWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : undefined;
   const weightChange = startWeight !== undefined && currentWeight !== undefined 
