@@ -57,8 +57,8 @@ const Countdown = () => {
 
   // Fixed start date: Sunday 27th July, 2025 at 00:01 CET+1
   const startTime = new Date('2025-07-27T00:01:00+02:00'); // Sunday 27th July at 00:01 CET+1
-  // Fixed end date: Friday 12th September, 2025 at 00:01 CET+1
-  const endTime = new Date('2025-09-12T00:01:00+02:00'); // Friday 12th September at 00:01 CET+1
+  // Fixed end date: Friday 30th August, 2025 at 00:01 CET+1
+  const endTime = new Date('2025-08-30T00:01:00+02:00'); // Friday 30th August at 00:01 CET+1
 
   useEffect(() => {
     setMounted(true);
@@ -218,7 +218,7 @@ const Countdown = () => {
     : null;
   
   // Target weight and "Still To Go" calculation
-  const targetWeight = 82.50;
+  const targetWeight = 84.00;
   const stillToGo = currentWeight !== undefined 
     ? (currentWeight - targetWeight).toFixed(2) 
     : null;
