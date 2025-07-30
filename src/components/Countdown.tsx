@@ -57,8 +57,8 @@ const Countdown = () => {
 
   // Fixed start date: Sunday 27th July, 2025 at 00:01 CET+1
   const startTime = new Date('2025-07-27T00:01:00+02:00'); // Sunday 27th July at 00:01 CET+1
-  // Fixed end date: Friday 30th August, 2025 at 00:01 CET+1
-  const endTime = new Date('2025-08-30T00:01:00+02:00'); // Friday 30th August at 00:01 CET+1
+  // Fixed end date: Friday 29th August, 2025 at 00:01 CET+1
+  const endTime = new Date('2025-08-29T00:01:00+02:00'); // Friday 29th August at 00:01 CET+1
 
   useEffect(() => {
     setMounted(true);
