@@ -67,7 +67,13 @@ const Countdown = () => {
     
     while (currentDate <= lastDay || currentDate.getDay() !== 0) {
       const isCurrentMonth = currentDate.getMonth() === month;
-      const isPast = currentDate < new Date();
+      
+      // Fix: Compare only the date part, not the full datetime
+      const today = new Date();
+      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+      const isPast = currentDateOnly < todayDate;
+      
       const isInRange = currentDate >= startTime && currentDate <= endTime;
       
       // Check if date is in special green ranges
