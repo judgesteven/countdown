@@ -6,6 +6,7 @@ interface DayData {
   date: string;
   isPast: boolean;
   isSpecialGreen?: boolean;
+  isOverlapping?: boolean;
   dateObj: Date;
 }
 
@@ -75,12 +76,16 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
         (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)); // Nov 14 - Nov 28
       
+      // Check if this date appears in multiple months (overlapping)
+      const isOverlapping = !isCurrentMonth && isSpecialGreen;
+      
       days.push({
         date: currentDate.getDate(),
         isCurrentMonth,
         isPast,
         isInRange,
         isSpecialGreen,
+        isOverlapping,
         dateObj: new Date(currentDate)
       });
       
@@ -267,7 +272,11 @@ const Countdown = () => {
                     let textColor = 'text-gray-400';
                     
                     if (day.isSpecialGreen) {
-                      bgColor = 'bg-green-600';
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-green-600/35'; // Same green with 35% transparency
+                      } else {
+                        bgColor = 'bg-green-600'; // Regular green for current month dates
+                      }
                       textColor = 'text-white';
                     } else if (day.isCurrentMonth) {
                       bgColor = 'bg-gray-600';
@@ -319,7 +328,11 @@ const Countdown = () => {
                     let textColor = 'text-gray-400';
                     
                     if (day.isSpecialGreen) {
-                      bgColor = 'bg-green-600';
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-green-600/35'; // Same green with 35% transparency
+                      } else {
+                        bgColor = 'bg-green-600'; // Regular green for current month dates
+                      }
                       textColor = 'text-white';
                     } else if (day.isCurrentMonth) {
                       bgColor = 'bg-gray-600';
