@@ -5,9 +5,8 @@ import { useEffect, useState } from 'react';
 interface DayData {
   date: string;
   isPast: boolean;
+  isSpecialGreen?: boolean;
   dateObj: Date;
-  kmsRun?: number;
-  weight?: number;
 }
 
 const Countdown = () => {
@@ -20,11 +19,6 @@ const Countdown = () => {
   const [progress, setProgress] = useState(0);
   const [daysList, setDaysList] = useState<DayData[]>([]);
   const [dayMarkers, setDayMarkers] = useState<number[]>([]);
-  const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
-  const [kmsRun, setKmsRun] = useState('');
-
-
-  const [weight, setWeight] = useState('');
 
   // Helper function to convert to CET+1
   const toCET = (date: Date) => {
@@ -60,6 +54,42 @@ const Countdown = () => {
   // Fixed end date: Friday 29th August, 2025 at 00:01 CET+1
   const endTime = new Date('2025-08-29T00:01:00+02:00'); // Friday 29th August at 00:01 CET+1
 
+  // Helper function to get month data
+  const getMonthData = (year: number, month: number) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+    
+    const days = [];
+    const currentDate = new Date(startDate);
+    
+    while (currentDate <= lastDay || currentDate.getDay() !== 0) {
+      const isCurrentMonth = currentDate.getMonth() === month;
+      const isPast = currentDate < new Date();
+      const isInRange = currentDate >= startTime && currentDate <= endTime;
+      
+      // Check if date is in special green ranges
+      const isSpecialGreen = 
+        (currentDate >= new Date(2025, 7, 29) && currentDate <= new Date(2025, 8, 12)) || // Aug 29 - Sep 12
+        (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
+        (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)); // Nov 14 - Nov 28
+      
+      days.push({
+        date: currentDate.getDate(),
+        isCurrentMonth,
+        isPast,
+        isInRange,
+        isSpecialGreen,
+        dateObj: new Date(currentDate)
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return days;
+  };
+
   useEffect(() => {
     setMounted(true);
 
@@ -91,25 +121,6 @@ const Countdown = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Load saved distances, steps and weight from localStorage
-    const loadDistances = () => {
-      try {
-        const savedDistances = localStorage.getItem('workout-distances');
-        if (savedDistances) {
-          const distances = JSON.parse(savedDistances);
-          days.forEach(day => {
-            if (distances[day.date]) {
-              day.kmsRun = distances[day.date].kmsRun;
-              day.weight = distances[day.date].weight;
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load distances from localStorage:', error);
-      }
-    };
-
-    loadDistances();
     setDaysList(days);
 
     const calculateTimeLeft = () => {
@@ -171,58 +182,6 @@ const Countdown = () => {
     };
   }, []);
 
-  const handleDayClick = (day: DayData) => {
-    setSelectedDay(day);
-    setKmsRun(day.kmsRun?.toString() || '');
-    setWeight(day.weight?.toString() || '');
-  };
-
-  const handleSubmit = () => {
-    if (selectedDay) {
-      const updatedDays = daysList.map(day =>
-        day.date === selectedDay.date
-          ? {
-              ...day,
-              kmsRun: kmsRun ? parseFloat(kmsRun) : undefined,
-              weight: weight ? parseFloat(weight) : undefined
-            }
-          : day
-      );
-      setDaysList(updatedDays);
-
-      // Save to localStorage
-      const distances: Record<string, { kmsRun?: number; weight?: number }> = {};
-      updatedDays.forEach(day => {
-        if (day.kmsRun !== undefined || day.weight !== undefined) {
-          distances[day.date] = {
-            kmsRun: day.kmsRun,
-            weight: day.weight
-          };
-        }
-      });
-      
-      localStorage.setItem('workout-distances', JSON.stringify(distances));
-      setSelectedDay(null);
-      console.log('Workout data saved successfully!');
-    }
-  };
-
-  const totalKmsRun = daysList.reduce((sum, day) => sum + (day.kmsRun || 0), 0);
-
-  // Weight data calculations - find most recent weight entry
-  const startWeight = daysList[0]?.weight || 90; // Default starting weight is 90kg
-  const weightEntries = daysList.filter(day => day.weight !== undefined);
-  const currentWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : undefined;
-  const weightChange = startWeight !== undefined && currentWeight !== undefined 
-    ? (currentWeight - startWeight).toFixed(2) 
-    : null;
-  
-  // Target weight and "Still To Go" calculation
-  const targetWeight = 84.00;
-  const stillToGo = currentWeight !== undefined 
-    ? (currentWeight - targetWeight).toFixed(2) 
-    : null;
-
   if (!mounted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-white">
@@ -230,6 +189,16 @@ const Countdown = () => {
       </div>
     );
   }
+
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    { name: 'August 2025', year: 2025, month: 7 },
+    { name: 'September 2025', year: 2025, month: 8 },
+    { name: 'October 2025', year: 2025, month: 9 },
+    { name: 'November 2025', year: 2025, month: 10 },
+    { name: 'December 2025', year: 2025, month: 11 },
+    { name: 'January 2026', year: 2026, month: 0 }
+  ];
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-white px-4">
@@ -270,116 +239,113 @@ const Countdown = () => {
           <span className="text-xl">Minutes</span>
         </div>
       </div>
-      <div className="w-[80vw]">
-        <div className="grid grid-cols-7 gap-2">
-          {daysList.map((day, index) => (
-            <div 
-              key={index}
-              className={`bg-gray-800 rounded-lg p-2 text-center hover:bg-gray-700 transition-colors text-sm cursor-pointer ${
-                day.isPast ? 'opacity-50' : ''
-              }`}
-              onClick={() => handleDayClick(day)}
-            >
-              <div>{day.date}</div>
-              {day.kmsRun !== undefined && (
-                <div className="text-green-400">Run: {day.kmsRun.toFixed(1)}km</div>
-              )}
-
-
-              {day.weight !== undefined && (
-                <div className="text-yellow-400">Weight: {day.weight.toFixed(2)}kg</div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 text-center">
-          <div className="text-xl font-bold mb-2">Workout Data</div>
-                      <div className="grid grid-cols-1 gap-4">
-              <div className="bg-gray-800 rounded-lg p-4">
-                <div className="text-green-400">Total Run: {totalKmsRun.toFixed(1)}km</div>
+      
+      {/* Monthly Calendar View */}
+      <div className="w-full max-w-7xl">
+        {/* First row: August, September, October */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
+          {months.slice(0, 3).map((monthData) => {
+            const monthDays = getMonthData(monthData.year, monthData.month);
+            
+            return (
+              <div key={`${monthData.year}-${monthData.month}`} className="bg-gray-800 rounded-lg p-4">
+                <h2 className="text-xl font-bold text-center mb-3">{monthData.name}</h2>
+                
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {weekdays.map((day) => (
+                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map((day, index) => {
+                    let bgColor = 'bg-gray-700';
+                    let textColor = 'text-gray-400';
+                    
+                    if (day.isSpecialGreen) {
+                      bgColor = 'bg-green-600';
+                      textColor = 'text-white';
+                    } else if (day.isCurrentMonth) {
+                      bgColor = 'bg-gray-600';
+                      textColor = 'text-white';
+                    }
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
+                      >
+                        {day.isPast && (
+                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                            😊
+                          </div>
+                        )}
+                        {day.date}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            );
+          })}
         </div>
         
-        {/* Weight Data Section */}
-        <div className="mt-8 text-center">
-          <div className="text-xl font-bold mb-2">Weight Data</div>
-          <div className="grid grid-cols-5 gap-4">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">
-                Starting Weight: {startWeight !== undefined ? startWeight.toFixed(2) : 'Not set'}kg
+        {/* Second row: November, December, January */}
+        <div className="grid grid-cols-3 gap-6">
+          {months.slice(3, 6).map((monthData) => {
+            const monthDays = getMonthData(monthData.year, monthData.month);
+            
+            return (
+              <div key={`${monthData.year}-${monthData.month}`} className="bg-gray-800 rounded-lg p-4">
+                <h2 className="text-xl font-bold text-center mb-3">{monthData.name}</h2>
+                
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {weekdays.map((day) => (
+                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map((day, index) => {
+                    let bgColor = 'bg-gray-700';
+                    let textColor = 'text-gray-400';
+                    
+                    if (day.isSpecialGreen) {
+                      bgColor = 'bg-green-600';
+                      textColor = 'text-white';
+                    } else if (day.isCurrentMonth) {
+                      bgColor = 'bg-gray-600';
+                      textColor = 'text-white';
+                    }
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
+                      >
+                        {day.isPast && (
+                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                            😊
+                          </div>
+                        )}
+                        {day.date}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">
-                Target Weight: {targetWeight.toFixed(2)}kg
-              </div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">
-                Current Weight: {currentWeight !== undefined ? currentWeight.toFixed(2) : 'Not set'}kg
-              </div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">
-                Difference: {weightChange ? `${weightChange}kg` : 'Not available'}
-              </div>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="text-yellow-400">
-                Still To Go: {stillToGo ? `${stillToGo}kg` : 'Not available'}
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
-
-      {/* Popup */}
-      {selectedDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-gray-800 p-6 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">{selectedDay.date}</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">KMs Run</label>
-                <input
-                  type="number"
-                  value={kmsRun}
-                  onChange={(e) => setKmsRun(e.target.value)}
-                  className="w-full bg-gray-700 rounded px-3 py-2"
-                  placeholder="Enter KMs run"
-                />
-              </div>
-
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Weight (kg)</label>
-                <input
-                  type="number"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="w-full bg-gray-700 rounded px-3 py-2"
-                  placeholder="Enter weight in kg"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setSelectedDay(null)}
-                  className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
