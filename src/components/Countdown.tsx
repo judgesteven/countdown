@@ -80,7 +80,8 @@ const Countdown = () => {
       const isSpecialGreen = 
         (currentDate >= new Date(2025, 7, 29) && currentDate <= new Date(2025, 8, 12)) || // Aug 29 - Sep 12
         (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
-        (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)); // Nov 14 - Nov 28
+        (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)) || // Nov 14 - Nov 28
+        (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)); // Dec 19 - Jan 9
       
       // Check if this date appears in multiple months (overlapping)
       const isOverlapping = !isCurrentMonth && isSpecialGreen;
