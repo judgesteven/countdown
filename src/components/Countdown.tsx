@@ -6,6 +6,7 @@ interface DayData {
   date: string;
   isPast: boolean;
   isSpecialGreen?: boolean;
+  isSpecialBlue?: boolean;
   isOverlapping?: boolean;
   dateObj: Date;
 }
@@ -50,10 +51,10 @@ const Countdown = () => {
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: Sunday 27th July, 2025 at 00:01 CET+1
-  const startTime = new Date('2025-07-27T00:01:00+02:00'); // Sunday 27th July at 00:01 CET+1
-  // Fixed end date: Friday 29th August, 2025 at 00:01 CET+1
-  const endTime = new Date('2025-08-29T00:01:00+02:00'); // Friday 29th August at 00:01 CET+1
+  // Fixed start date: Friday 12th September, 2025 at 21:00 CET+1
+  const startTime = new Date('2025-09-12T21:00:00+02:00'); // Friday 12th September at 21:00 CET+1
+  // Fixed end date: Thursday 9th October, 2025 at 00:00 CET+1
+  const endTime = new Date('2025-10-09T00:00:00+02:00'); // Thursday 9th October at 00:00 CET+1
 
   // Helper function to get month data
   const getMonthData = (year: number, month: number) => {
@@ -81,10 +82,15 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 7, 29) && currentDate <= new Date(2025, 8, 12)) || // Aug 29 - Sep 12
         (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
         (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)) || // Nov 14 - Nov 28
+        (currentDate >= new Date(2025, 11, 5) && currentDate <= new Date(2025, 11, 7)) || // Dec 5 - Dec 7
         (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)); // Dec 19 - Jan 9
       
+      // Check if date is in special blue range
+      const isSpecialBlue = 
+        (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)); // Sep 21 - Sep 28
+      
       // Check if this date appears in multiple months (overlapping)
-      const isOverlapping = !isCurrentMonth && isSpecialGreen;
+      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue);
       
       days.push({
         date: currentDate.getDate(),
@@ -92,6 +98,7 @@ const Countdown = () => {
         isPast,
         isInRange,
         isSpecialGreen,
+        isSpecialBlue,
         isOverlapping,
         dateObj: new Date(currentDate)
       });
@@ -104,7 +111,8 @@ const Countdown = () => {
 
   useEffect(() => {
     setMounted(true);
-
+    
+    // Simplified initialization
     const totalHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
     const totalDays = Math.ceil(totalHours / 24);
 
@@ -123,7 +131,7 @@ const Countdown = () => {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
-        timeZone: 'Europe/Paris' // Use Paris timezone for CET
+        timeZone: 'Europe/Paris'
       });
       days.push({
         date: dateString,
@@ -136,41 +144,29 @@ const Countdown = () => {
     setDaysList(days);
 
     const calculateTimeLeft = () => {
-      const now = toCET(new Date()); // Convert current time to CET+1
+      const now = toCET(new Date());
       const difference = endTime.getTime() - now.getTime();
       
       if (difference > 0) {
-        // Calculate progress based on hours elapsed
         const hoursElapsed = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         const currentProgress = (hoursElapsed / totalHours) * 100;
         setProgress(Math.min(currentProgress, 100));
 
-        // Calculate days, hours, and minutes
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
 
-        setTimeLeft({
-          days,
-          hours,
-          minutes
-        });
+        setTimeLeft({ days, hours, minutes });
 
-        // Update past days - only mark as past if we're past the end of that day in CET+1
         setDaysList(prevDays => 
           prevDays.map(day => {
             const dayStart = getStartOfDay(day.dateObj);
             const dayEnd = getEndOfDay(day.dateObj);
             const isPast = now > dayEnd;
-            
-            return {
-              ...day,
-              isPast
-            };
+            return { ...day, isPast };
           })
         );
       } else {
-        // If we've passed the end date, set progress to 100%
         setProgress(100);
         setTimeLeft({ days: 0, hours: 0, minutes: 0 });
       }
@@ -179,28 +175,17 @@ const Countdown = () => {
     calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
 
-    // Set up hourly refresh
-    const scheduleNextRefresh = () => {
-      const timeUntilNextHour = getTimeUntilNextHour();
-      setTimeout(() => {
-        window.location.reload();
-      }, timeUntilNextHour);
-    };
-
-    scheduleNextRefresh();
-
-    return () => {
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-white">
-        <h1 className="text-4xl font-bold mb-8">Loading...</h1>
-      </div>
-    );
-  }
+  // Temporarily remove mounted check to debug
+  // if (!mounted) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center py-12 text-white">
+  //       <h1 className="text-4xl font-bold mb-8">Loading...</h1>
+  //     </div>
+  //   );
+  // }
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = [
@@ -278,7 +263,14 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialGreen) {
+                    if (day.isSpecialBlue) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
+                      } else {
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialGreen) {
                       if (day.isOverlapping) {
                         bgColor = 'bg-green-600/35'; // Same green with 35% transparency
                       } else {
@@ -334,7 +326,14 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialGreen) {
+                    if (day.isSpecialBlue) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
+                      } else {
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialGreen) {
                       if (day.isOverlapping) {
                         bgColor = 'bg-green-600/35'; // Same green with 35% transparency
                       } else {
