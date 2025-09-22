@@ -485,7 +485,7 @@ const Countdown = () => {
       
       {/* May 5th Countdown */}
       <div className="mt-12 text-center">
-        <h2 className="text-3xl font-bold mb-6 text-gray-300">Target State</h2>
+          <h2 className="text-3xl font-bold mb-6 text-gray-300">Back to Finland</h2>
         <div className="grid grid-cols-3 gap-16 text-center">
           <div className="flex flex-col items-center">
             <span className="text-9xl font-bold text-gray-300">{mayCountdown.months}</span>
