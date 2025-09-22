@@ -89,7 +89,9 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
         (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)) || // Nov 14 - Nov 28
         (currentDate >= new Date(2025, 11, 5) && currentDate <= new Date(2025, 11, 7)) || // Dec 5 - Dec 7
-        (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)); // Dec 19 - Jan 9
+        (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)) || // Dec 19 - Jan 9
+        (currentDate >= new Date(2026, 2, 6) && currentDate <= new Date(2026, 2, 20)) || // Mar 6 - Mar 20
+        (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
       
       // Check if date is in special blue range
       const isSpecialBlue = 
