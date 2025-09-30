@@ -58,8 +58,8 @@ const Countdown = () => {
 
   // Fixed start date: Friday 12th September, 2025 at 21:00 CET+1
   const startTime = new Date('2025-09-12T21:00:00+02:00'); // Friday 12th September at 21:00 CET+1
-  // Fixed end date: Thursday 9th October, 2025 at 00:00 CET+1
-  const endTime = new Date('2025-10-09T00:00:00+02:00'); // Thursday 9th October at 00:00 CET+1
+  // Fixed end date: Friday 10th October, 2025 at 00:10 CET+1
+  const endTime = new Date('2025-10-10T00:10:00+02:00'); // Friday 10th October at 00:10 CET+1
 
   // Helper function to get month data
   const getMonthData = (year: number, month: number) => {
