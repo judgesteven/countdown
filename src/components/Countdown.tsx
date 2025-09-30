@@ -28,38 +28,38 @@ const Countdown = () => {
     days: 0
   });
 
-  // Helper function to convert to CET+1
-  const toCET = (date: Date) => {
-    const cetDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-    return cetDate;
+  // Helper function to convert to KSA time (UTC+3)
+  const toKSA = (date: Date) => {
+    const ksaDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+    return ksaDate;
   };
 
-  // Helper function to get start of day in CET+1
+  // Helper function to get start of day in KSA time
   const getStartOfDay = (date: Date) => {
     const start = new Date(date);
     start.setHours(0, 0, 0, 0);
-    return toCET(start);
+    return toKSA(start);
   };
 
-  // Helper function to get end of day in CET+1
+  // Helper function to get end of day in KSA time
   const getEndOfDay = (date: Date) => {
     const end = new Date(date);
     end.setHours(23, 59, 59, 999);
-    return toCET(end);
+    return toKSA(end);
   };
 
   // Helper function to get time until next hour
   const getTimeUntilNextHour = () => {
-    const now = toCET(new Date());
+    const now = toKSA(new Date());
     const nextHour = new Date(now);
     nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: Friday 12th September, 2025 at 21:00 CET+1
-  const startTime = new Date('2025-09-12T21:00:00+02:00'); // Friday 12th September at 21:00 CET+1
-  // Fixed end date: Friday 10th October, 2025 at 00:10 CET+1
-  const endTime = new Date('2025-10-10T00:10:00+02:00'); // Friday 10th October at 00:10 CET+1
+  // Fixed start date: Friday 12th September, 2025 at 21:00 KSA time
+  const startTime = new Date('2025-09-12T21:00:00+03:00'); // Friday 12th September at 21:00 KSA time
+  // Fixed end date: Friday 10th October, 2025 at 00:10 KSA time
+  const endTime = new Date('2025-10-10T00:10:00+03:00'); // Friday 10th October at 00:10 KSA time
 
   // Helper function to get month data
   const getMonthData = (year: number, month: number) => {
@@ -156,7 +156,7 @@ const Countdown = () => {
     setDaysList(days);
 
     const calculateTimeLeft = () => {
-      const now = toCET(new Date());
+      const now = toKSA(new Date());
       const difference = endTime.getTime() - now.getTime();
       
       if (difference > 0) {
@@ -185,8 +185,8 @@ const Countdown = () => {
     };
 
     const calculateMayCountdown = () => {
-      const now = toCET(new Date());
-      const may5th = new Date('2026-05-05T00:00:00+02:00'); // May 5th, 2026 at midnight CET+1
+      const now = toKSA(new Date());
+      const may5th = new Date('2026-05-05T00:00:00+03:00'); // May 5th, 2026 at midnight KSA time
       const difference = may5th.getTime() - now.getTime();
       
       if (difference > 0) {
