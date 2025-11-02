@@ -89,6 +89,7 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)) || // Nov 14 - Nov 28
         (currentDate >= new Date(2025, 11, 5) && currentDate <= new Date(2025, 11, 7)) || // Dec 5 - Dec 7
         (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)) || // Dec 19 - Jan 9
+        (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 2, 6) && currentDate <= new Date(2026, 2, 20)) || // Mar 6 - Mar 20
         (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
       
