@@ -8,6 +8,7 @@ interface DayData {
   isSpecialGreen?: boolean;
   isSpecialBlue?: boolean;
   isSpecialRed?: boolean;
+  isSpecialPurple?: boolean;
   isOverlapping?: boolean;
   dateObj: Date;
 }
@@ -88,7 +89,8 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 9, 10) && currentDate <= new Date(2025, 9, 24)) || // Oct 10 - Oct 24
         (currentDate >= new Date(2025, 10, 14) && currentDate <= new Date(2025, 10, 28)) || // Nov 14 - Nov 28
         (currentDate >= new Date(2025, 11, 5) && currentDate <= new Date(2025, 11, 7)) || // Dec 5 - Dec 7
-        (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2026, 0, 9)) || // Dec 19 - Jan 9
+        (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2025, 11, 22)) || // Dec 19 - Dec 22
+        (currentDate >= new Date(2026, 0, 2) && currentDate <= new Date(2026, 0, 9)) || // Jan 2 - Jan 9
         (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 1, 27) && currentDate <= new Date(2026, 2, 13)) || // Feb 27 - Mar 13
         (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
@@ -97,12 +99,17 @@ const Countdown = () => {
       const isSpecialBlue = 
         (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)); // Sep 21 - Sep 28
       
-      // Check if date is May 5th (special red highlighting)
+      // Check if date is in special red ranges
       const isSpecialRed = 
+        (currentDate >= new Date(2025, 11, 23) && currentDate <= new Date(2025, 11, 29)) || // Dec 23 - Dec 29
+        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 1); // Jan 1, 2026
+      
+      // Check if date is May 5th (special purple highlighting)
+      const isSpecialPurple = 
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 4 && currentDate.getDate() === 5); // May 5, 2026
       
       // Check if this date appears in multiple months (overlapping)
-      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed);
+      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple);
       
       days.push({
         date: currentDate.getDate(),
@@ -112,6 +119,7 @@ const Countdown = () => {
         isSpecialGreen,
         isSpecialBlue,
         isSpecialRed,
+        isSpecialPurple,
         isOverlapping,
         dateObj: new Date(currentDate)
       });
@@ -301,7 +309,10 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialRed) {
+                    if (day.isSpecialPurple) {
+                      bgColor = 'bg-purple-600';
+                      textColor = 'text-white';
+                    } else if (day.isSpecialRed) {
                       bgColor = 'bg-red-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
@@ -367,7 +378,10 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialRed) {
+                    if (day.isSpecialPurple) {
+                      bgColor = 'bg-purple-600';
+                      textColor = 'text-white';
+                    } else if (day.isSpecialRed) {
                       bgColor = 'bg-red-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
@@ -438,8 +452,13 @@ const Countdown = () => {
                       textColor = 'text-white';
                     }
                     
-                    // Check for special red highlighting (May 5th)
-                    if (day.isSpecialRed) {
+                    // Check for special purple highlighting (May 5th)
+                    if (day.isSpecialPurple) {
+                      bgColor = 'bg-purple-600';
+                      textColor = 'text-white';
+                    }
+                    // Check for special red highlighting
+                    else if (day.isSpecialRed) {
                       bgColor = 'bg-red-600';
                       textColor = 'text-white';
                     }
