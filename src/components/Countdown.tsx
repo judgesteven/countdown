@@ -313,7 +313,11 @@ const Countdown = () => {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
-                      bgColor = 'bg-red-600';
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                      } else {
+                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                      }
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
                       if (day.isOverlapping) {
@@ -382,7 +386,11 @@ const Countdown = () => {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
-                      bgColor = 'bg-red-600';
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                      } else {
+                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                      }
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
                       if (day.isOverlapping) {
@@ -459,7 +467,11 @@ const Countdown = () => {
                     }
                     // Check for special red highlighting
                     else if (day.isSpecialRed) {
-                      bgColor = 'bg-red-600';
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-red-600/35';
+                      } else {
+                        bgColor = 'bg-red-600';
+                      }
                       textColor = 'text-white';
                     }
                     // Check for special blue highlighting
