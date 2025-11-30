@@ -20,9 +20,12 @@ const WeightTracking = () => {
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
   const [newWeight, setNewWeight] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [lastSaturdayWithReading, setLastSaturdayWithReading] = useState<Date | null>(null);
+  const [recalculationBaseWeight, setRecalculationBaseWeight] = useState<number>(90.2);
+  const [recalculationBaseDate, setRecalculationBaseDate] = useState<Date>(() => new Date('2025-11-29T00:00:00+03:00'));
 
   const targetWeight = 80;
-  const startWeight = 90;
+  const startWeight = 90.2; // Starting weight
   const goalDate = new Date('2026-06-01T00:00:00+03:00'); // June 1st, 2026 KSA time
   const [startDate, setStartDate] = useState<Date>(() => {
     if (typeof window !== 'undefined') {
@@ -60,6 +63,31 @@ const WeightTracking = () => {
           console.error('Error loading start date:', error);
           const now = toKSA(new Date());
           setStartDate(now);
+        }
+        
+        // Load recalculation base from localStorage
+        try {
+          const savedBaseWeight = localStorage.getItem('recalculationBaseWeight');
+          const savedBaseDate = localStorage.getItem('recalculationBaseDate');
+          const savedLastSaturday = localStorage.getItem('lastSaturdayWithReading');
+          
+          if (savedBaseWeight && savedBaseDate) {
+            setRecalculationBaseWeight(parseFloat(savedBaseWeight));
+            setRecalculationBaseDate(new Date(savedBaseDate));
+          } else {
+            // Initialize with default values
+            const defaultBaseDate = toKSA(new Date('2025-11-29T00:00:00+03:00'));
+            setRecalculationBaseWeight(90.2);
+            setRecalculationBaseDate(defaultBaseDate);
+            localStorage.setItem('recalculationBaseWeight', '90.2');
+            localStorage.setItem('recalculationBaseDate', defaultBaseDate.toISOString());
+          }
+          
+          if (savedLastSaturday) {
+            setLastSaturdayWithReading(new Date(savedLastSaturday));
+          }
+        } catch (error) {
+          console.error('Error loading recalculation base:', error);
         }
         
         // Load weight entries from localStorage
@@ -121,6 +149,7 @@ const WeightTracking = () => {
       }
 
       const now = toKSA(new Date());
+      const isSaturday = now.getDay() === 6;
       
       // Check if there's already an entry for today's date
       const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, now));
@@ -146,9 +175,60 @@ const WeightTracking = () => {
       setCurrentWeight(weight);
       setNewWeight('');
 
+      // Check if we need to recalculate (Saturday reading or missed Saturday)
+      let newBaseWeight = recalculationBaseWeight;
+      let newBaseDate = recalculationBaseDate;
+      let newLastSaturday = lastSaturdayWithReading;
+      let shouldRecalculate = false;
+      
+      if (isSaturday) {
+        // It's a Saturday - update the recalculation base
+        newBaseWeight = weight;
+        newBaseDate = now;
+        newLastSaturday = now;
+        shouldRecalculate = true;
+        setRecalculationBaseWeight(weight);
+        setRecalculationBaseDate(now);
+        setLastSaturdayWithReading(now);
+      } else {
+        // Check if last Saturday had a reading
+        if (!lastSaturdayWithReading) {
+          // No Saturday reading yet - recalculate on first reading
+          newBaseWeight = weight;
+          newBaseDate = now;
+          shouldRecalculate = true;
+          setRecalculationBaseWeight(weight);
+          setRecalculationBaseDate(now);
+        } else {
+          // Find the most recent Saturday
+          const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const lastSaturdayOnly = new Date(lastSaturdayWithReading.getFullYear(), lastSaturdayWithReading.getMonth(), lastSaturdayWithReading.getDate());
+          const daysSinceLastSaturday = Math.floor((todayOnly.getTime() - lastSaturdayOnly.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // If more than 7 days since last Saturday, we missed a Saturday
+          if (daysSinceLastSaturday > 7) {
+            // Find the most recent Saturday before today
+            let recentSaturday = new Date(now);
+            while (recentSaturday.getDay() !== 6) {
+              recentSaturday.setDate(recentSaturday.getDate() - 1);
+            }
+            recentSaturday.setHours(0, 0, 0, 0);
+            
+            // Check if there's a reading for that Saturday
+            const saturdayEntry = updatedEntries.find(entry => isSameDate(entry.date, recentSaturday));
+            if (!saturdayEntry) {
+              // Missed Saturday - recalculate based on current weight
+              newBaseWeight = weight;
+              newBaseDate = now;
+              shouldRecalculate = true;
+              setRecalculationBaseWeight(weight);
+              setRecalculationBaseDate(now);
+            }
+          }
+        }
+      }
+
       // Save to localStorage with error handling
-      // Note: localStorage persists data in the user's browser, so it will work on Vercel
-      // Data is stored client-side and will persist across sessions and deployments
       if (typeof window !== 'undefined') {
         try {
           // Convert dates to ISO strings for storage
@@ -157,9 +237,17 @@ const WeightTracking = () => {
             weight: entry.weight
           }));
           localStorage.setItem('weightEntries', JSON.stringify(entriesToSave));
+          
+          // Save recalculation base if updated
+          if (shouldRecalculate) {
+            localStorage.setItem('recalculationBaseWeight', newBaseWeight.toString());
+            localStorage.setItem('recalculationBaseDate', newBaseDate.toISOString());
+            if (isSaturday) {
+              localStorage.setItem('lastSaturdayWithReading', now.toISOString());
+            }
+          }
         } catch (error) {
           console.error('Error saving to localStorage:', error);
-          // Try to handle quota exceeded error
           if (error instanceof DOMException && error.code === 22) {
             alert('Storage limit reached. Please clear some old entries.');
           } else {
@@ -191,48 +279,90 @@ const WeightTracking = () => {
     }
   }
 
-  // Calculate values safely
-  let weightProgressClamped = 0;
-  let timeProgressClamped = 0;
-  let remainingWeight = 0;
-  let remainingWeightGrams = 0;
-  let weeksRemaining = 0;
-  let gramsPerWeek = 0;
-  let remainingTime = 0;
+  // Calculate values safely using useMemo to recalculate when base changes
+  const {
+    weightProgressClamped,
+    timeProgressClamped,
+    remainingWeight,
+    remainingWeightGrams,
+    weeksRemaining,
+    gramsPerWeek,
+    gramsPerDay,
+    gramsPerMonth,
+    remainingTime
+  } = useMemo(() => {
+    let weightProgressClamped = 0;
+    let timeProgressClamped = 0;
+    let remainingWeight = 0;
+    let remainingWeightGrams = 0;
+    let weeksRemaining = 0;
+    let gramsPerWeek = 0;
+    let gramsPerDay = 0;
+    let gramsPerMonth = 0;
+    let remainingTime = 0;
 
-  if (mounted && startDate) {
-    try {
-      // Calculate weight progress (0-100%)
-      const weightProgress = ((startWeight - currentWeight) / (startWeight - targetWeight)) * 100;
-      weightProgressClamped = Math.max(0, Math.min(100, weightProgress));
+    if (mounted && startDate) {
+      try {
+        // Use recalculation base for calculations
+        const baseWeight = recalculationBaseWeight;
+        const baseDate = recalculationBaseDate;
+        
+        // Calculate weight progress (0-100%) based on original start weight
+        const weightProgress = ((startWeight - currentWeight) / (startWeight - targetWeight)) * 100;
+        weightProgressClamped = Math.max(0, Math.min(100, weightProgress));
 
-      // Calculate time progress
-      const totalTime = goalDate.getTime() - startDate.getTime();
-      const elapsedTime = now.getTime() - startDate.getTime();
-      remainingTime = goalDate.getTime() - now.getTime();
-      // Time progress shows elapsed time (0% = start, 100% = goal date reached)
-      const timeProgress = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 0;
-      timeProgressClamped = Math.max(0, Math.min(100, timeProgress));
+        // Calculate time progress
+        const totalTime = goalDate.getTime() - startDate.getTime();
+        const elapsedTime = now.getTime() - startDate.getTime();
+        remainingTime = goalDate.getTime() - now.getTime();
+        // Time progress shows elapsed time (0% = start, 100% = goal date reached)
+        const timeProgress = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 0;
+        timeProgressClamped = Math.max(0, Math.min(100, timeProgress));
 
-      // Calculate remaining weight to lose
-      remainingWeight = currentWeight - targetWeight;
-      remainingWeightGrams = remainingWeight * 1000;
+        // Calculate remaining weight to lose
+        remainingWeight = currentWeight - targetWeight;
+        remainingWeightGrams = remainingWeight * 1000;
 
-      // Calculate weeks remaining
-      weeksRemaining = remainingTime > 0 ? remainingTime / (1000 * 60 * 60 * 24 * 7) : 0;
-      gramsPerWeek = weeksRemaining > 0 ? remainingWeightGrams / weeksRemaining : 0;
-    } catch (error) {
-      console.error('Error calculating progress:', error);
-      // Set safe defaults to prevent crashes
-      weightProgressClamped = 0;
-      timeProgressClamped = 0;
-      remainingWeight = currentWeight - targetWeight;
-      remainingWeightGrams = remainingWeight * 1000;
-      weeksRemaining = 0;
-      gramsPerWeek = 0;
-      remainingTime = 0;
+        // Calculate weeks remaining from recalculation base date
+        const remainingTimeFromBase = goalDate.getTime() - Math.max(baseDate.getTime(), now.getTime());
+        weeksRemaining = remainingTimeFromBase > 0 ? remainingTimeFromBase / (1000 * 60 * 60 * 24 * 7) : 0;
+        
+        // Calculate weight to lose from recalculation base
+        const remainingWeightFromBase = currentWeight - targetWeight;
+        const remainingWeightGramsFromBase = remainingWeightFromBase * 1000;
+        
+        gramsPerWeek = weeksRemaining > 0 ? remainingWeightGramsFromBase / weeksRemaining : 0;
+        
+        // Calculate daily and monthly rates
+        gramsPerDay = gramsPerWeek / 7;
+        gramsPerMonth = gramsPerWeek * (365.25 / 12 / 7); // Approximate monthly
+      } catch (error) {
+        console.error('Error calculating progress:', error);
+        // Set safe defaults to prevent crashes
+        weightProgressClamped = 0;
+        timeProgressClamped = 0;
+        remainingWeight = currentWeight - targetWeight;
+        remainingWeightGrams = remainingWeight * 1000;
+        weeksRemaining = 0;
+        gramsPerWeek = 0;
+        gramsPerDay = 0;
+        gramsPerMonth = 0;
+        remainingTime = 0;
+      }
     }
-  }
+    
+    return {
+      weightProgressClamped,
+      timeProgressClamped,
+      remainingWeight,
+      remainingWeightGrams,
+      weeksRemaining,
+      gramsPerWeek,
+      gramsPerDay,
+      gramsPerMonth,
+      remainingTime
+    };
+  }, [mounted, startDate, currentWeight, recalculationBaseWeight, recalculationBaseDate, now, startWeight, targetWeight, goalDate]);
 
   // Helper function to get weight for a specific date
   const getWeightForDate = (date: Date): { weight: number; isLoss: boolean } | null => {
@@ -324,17 +454,19 @@ const WeightTracking = () => {
   const getTargetWeightForSaturday = (saturdayDate: Date): number | null => {
     if (!mounted) return null;
     
-    const startDateForTargets = new Date('2025-11-29T00:00:00+03:00');
-    const startWeightForCalculation = 90.2;
-    const totalTime = goalDate.getTime() - startDateForTargets.getTime();
-    const timeToSaturday = saturdayDate.getTime() - startDateForTargets.getTime();
+    // Use recalculation base for target calculations
+    const baseWeight = recalculationBaseWeight;
+    const baseDate = recalculationBaseDate;
+    
+    const totalTime = goalDate.getTime() - baseDate.getTime();
+    const timeToSaturday = saturdayDate.getTime() - baseDate.getTime();
     
     if (timeToSaturday < 0 || timeToSaturday > totalTime) return null;
     
-    const progress = timeToSaturday / totalTime;
-    const totalWeightToLose = startWeightForCalculation - targetWeight;
+    const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
+    const totalWeightToLose = baseWeight - targetWeight;
     const weightToLoseBySaturday = progress * totalWeightToLose;
-    const targetWeightForSaturday = startWeightForCalculation - weightToLoseBySaturday;
+    const targetWeightForSaturday = baseWeight - weightToLoseBySaturday;
     
     return targetWeightForSaturday;
   };
@@ -352,7 +484,7 @@ const WeightTracking = () => {
           <div className="text-lg text-gray-400 mt-2">
             {gramsPerWeek > 0 ? (
               <>
-                {Math.round(gramsPerWeek / 7)}g / day - {gramsPerWeek.toFixed(0)}g / week - {Math.round(gramsPerWeek * 4.33)}g / month
+                {Math.round(gramsPerDay)}g / day - {gramsPerWeek.toFixed(0)}g / week - {Math.round(gramsPerMonth)}g / month
               </>
             ) : (
               <>Time has passed</>
@@ -658,31 +790,33 @@ const WeightTracking = () => {
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {(() => {
             const saturdays: { date: Date; targetWeight: number }[] = [];
-            const startDateForTargets = new Date('2025-11-29T00:00:00+03:00'); // November 29th as starting date
+            
+            // Use recalculation base for target calculations
+            const baseWeight = recalculationBaseWeight;
+            const baseDate = recalculationBaseDate;
             const endDate = new Date('2026-05-30T00:00:00+03:00'); // May 30th
             
-            // Start with November 29th (today/starting date) at 90.2KG
+            // Start with recalculation base date and weight
             saturdays.push({
-              date: new Date(startDateForTargets),
-              targetWeight: 90.2
+              date: new Date(baseDate),
+              targetWeight: baseWeight
             });
             
-            // Find next Saturday after Nov 29th
-            let currentDate = new Date(startDateForTargets);
+            // Find next Saturday after base date
+            let currentDate = new Date(baseDate);
             currentDate.setDate(currentDate.getDate() + 7); // Move to next Saturday
             
             // Calculate target weights for each Saturday
-            // Starting from Nov 29th at 90.2KG, need to reach 80KG by June 1st
-            const startWeightForCalculation = 90.2;
-            const totalTime = goalDate.getTime() - startDateForTargets.getTime();
-            const totalWeightToLose = startWeightForCalculation - targetWeight;
+            // Starting from base date at base weight, need to reach 80KG by June 1st
+            const totalTime = goalDate.getTime() - baseDate.getTime();
+            const totalWeightToLose = baseWeight - targetWeight;
             
             while (currentDate <= endDate) {
-              const timeToSaturday = currentDate.getTime() - startDateForTargets.getTime();
+              const timeToSaturday = currentDate.getTime() - baseDate.getTime();
               if (timeToSaturday > 0 && timeToSaturday <= totalTime) {
-                const progress = timeToSaturday / totalTime;
+                const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
                 const weightToLoseBySaturday = progress * totalWeightToLose;
-                const targetWeightForSaturday = startWeightForCalculation - weightToLoseBySaturday;
+                const targetWeightForSaturday = baseWeight - weightToLoseBySaturday;
                 
                 saturdays.push({
                   date: new Date(currentDate),
@@ -696,11 +830,11 @@ const WeightTracking = () => {
             
             // Add May 30th if it's not already included (it might be a Saturday or we need to add it anyway)
             const may30 = new Date('2026-05-30T00:00:00+03:00');
-            const may30Time = may30.getTime() - startDateForTargets.getTime();
+            const may30Time = may30.getTime() - baseDate.getTime();
             if (may30Time > 0 && may30Time <= totalTime) {
-              const may30Progress = may30Time / totalTime;
+              const may30Progress = totalTime > 0 ? may30Time / totalTime : 0;
               const weightToLoseByMay30 = may30Progress * totalWeightToLose;
-              const targetWeightForMay30 = startWeightForCalculation - weightToLoseByMay30;
+              const targetWeightForMay30 = baseWeight - weightToLoseByMay30;
               
               // Check if May 30th is already in the list
               const may30Exists = saturdays.some(s => 
