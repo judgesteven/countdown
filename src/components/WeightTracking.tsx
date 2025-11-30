@@ -105,6 +105,13 @@ const WeightTracking = () => {
     }
   }, []);
 
+  // Helper function to compare dates (year, month, day only)
+  const isSameDate = (date1: Date, date2: Date): boolean => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
   const handleAddWeight = () => {
     try {
       const weight = parseFloat(newWeight);
@@ -114,12 +121,27 @@ const WeightTracking = () => {
       }
 
       const now = toKSA(new Date());
-      const newEntry: WeightEntry = {
-        date: now,
-        weight: weight
-      };
-
-      const updatedEntries = [...weightEntries, newEntry];
+      
+      // Check if there's already an entry for today's date
+      const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, now));
+      
+      let updatedEntries: WeightEntry[];
+      if (existingEntryIndex >= 0) {
+        // Update existing entry for today
+        updatedEntries = [...weightEntries];
+        updatedEntries[existingEntryIndex] = {
+          date: now,
+          weight: weight
+        };
+      } else {
+        // Add new entry
+        const newEntry: WeightEntry = {
+          date: now,
+          weight: weight
+        };
+        updatedEntries = [...weightEntries, newEntry];
+      }
+      
       setWeightEntries(updatedEntries);
       setCurrentWeight(weight);
       setNewWeight('');
@@ -211,13 +233,6 @@ const WeightTracking = () => {
       remainingTime = 0;
     }
   }
-
-  // Helper function to compare dates (year, month, day only)
-  const isSameDate = (date1: Date, date2: Date): boolean => {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
-  };
 
   // Helper function to get weight for a specific date
   const getWeightForDate = (date: Date): { weight: number; isLoss: boolean } | null => {
