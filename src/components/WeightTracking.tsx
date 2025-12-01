@@ -450,23 +450,25 @@ const WeightTracking = () => {
     { name: 'June 2026', year: 2026, month: 5 }
   ];
 
-  // Calculate target weight for a specific Saturday (using Nov 29 start at 90.2KG)
+  // Calculate target weight for a specific Saturday (using original Nov 29 start at 90.2KG)
   const getTargetWeightForSaturday = (saturdayDate: Date): number | null => {
     if (!mounted) return null;
     
-    // Use recalculation base for target calculations
-    const baseWeight = recalculationBaseWeight;
-    const baseDate = recalculationBaseDate;
+    // Use ORIGINAL start date and weight for all target calculations (not recalculation base)
+    // This ensures past Saturdays always have targets calculated
+    const originalStartDate = new Date('2025-11-29T00:00:00+03:00'); // Nov 29, 2025
+    const originalStartWeight = 90.2; // Starting weight
     
-    const totalTime = goalDate.getTime() - baseDate.getTime();
-    const timeToSaturday = saturdayDate.getTime() - baseDate.getTime();
+    const totalTime = goalDate.getTime() - originalStartDate.getTime();
+    const timeToSaturday = saturdayDate.getTime() - originalStartDate.getTime();
     
+    // Allow any Saturday from start date to goal date
     if (timeToSaturday < 0 || timeToSaturday > totalTime) return null;
     
     const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
-    const totalWeightToLose = baseWeight - targetWeight;
+    const totalWeightToLose = originalStartWeight - targetWeight;
     const weightToLoseBySaturday = progress * totalWeightToLose;
-    const targetWeightForSaturday = baseWeight - weightToLoseBySaturday;
+    const targetWeightForSaturday = originalStartWeight - weightToLoseBySaturday;
     
     return targetWeightForSaturday;
   };
@@ -794,32 +796,33 @@ const WeightTracking = () => {
           {(() => {
             const saturdays: { date: Date; targetWeight: number }[] = [];
             
-            // Use recalculation base for target calculations
-            const baseWeight = recalculationBaseWeight;
-            const baseDate = recalculationBaseDate;
+            // Use ORIGINAL start date and weight for all target calculations (not recalculation base)
+            // This ensures Nov 29th and all past Saturdays are always included
+            const originalStartDate = new Date('2025-11-29T00:00:00+03:00'); // Nov 29, 2025
+            const originalStartWeight = 90.2; // Starting weight
             const endDate = new Date('2026-05-30T00:00:00+03:00'); // May 30th
             
-            // Start with recalculation base date and weight
+            // Start with original start date and weight (Nov 29th)
             saturdays.push({
-              date: new Date(baseDate),
-              targetWeight: baseWeight
+              date: new Date(originalStartDate),
+              targetWeight: originalStartWeight
             });
             
-            // Find next Saturday after base date
-            let currentDate = new Date(baseDate);
+            // Find next Saturday after original start date
+            let currentDate = new Date(originalStartDate);
             currentDate.setDate(currentDate.getDate() + 7); // Move to next Saturday
             
             // Calculate target weights for each Saturday
-            // Starting from base date at base weight, need to reach 80KG by June 1st
-            const totalTime = goalDate.getTime() - baseDate.getTime();
-            const totalWeightToLose = baseWeight - targetWeight;
+            // Starting from original start date at original weight, need to reach 80KG by June 1st
+            const totalTime = goalDate.getTime() - originalStartDate.getTime();
+            const totalWeightToLose = originalStartWeight - targetWeight;
             
             while (currentDate <= endDate) {
-              const timeToSaturday = currentDate.getTime() - baseDate.getTime();
+              const timeToSaturday = currentDate.getTime() - originalStartDate.getTime();
               if (timeToSaturday > 0 && timeToSaturday <= totalTime) {
                 const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
                 const weightToLoseBySaturday = progress * totalWeightToLose;
-                const targetWeightForSaturday = baseWeight - weightToLoseBySaturday;
+                const targetWeightForSaturday = originalStartWeight - weightToLoseBySaturday;
                 
                 saturdays.push({
                   date: new Date(currentDate),
@@ -833,11 +836,11 @@ const WeightTracking = () => {
             
             // Add May 30th if it's not already included (it might be a Saturday or we need to add it anyway)
             const may30 = new Date('2026-05-30T00:00:00+03:00');
-            const may30Time = may30.getTime() - baseDate.getTime();
+            const may30Time = may30.getTime() - originalStartDate.getTime();
             if (may30Time > 0 && may30Time <= totalTime) {
               const may30Progress = totalTime > 0 ? may30Time / totalTime : 0;
               const weightToLoseByMay30 = may30Progress * totalWeightToLose;
-              const targetWeightForMay30 = baseWeight - weightToLoseByMay30;
+              const targetWeightForMay30 = originalStartWeight - weightToLoseByMay30;
               
               // Check if May 30th is already in the list
               const may30Exists = saturdays.some(s => 
