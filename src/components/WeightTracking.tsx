@@ -450,27 +450,40 @@ const WeightTracking = () => {
     { name: 'June 2026', year: 2026, month: 5 }
   ];
 
-  // Calculate target weight for a specific Saturday (using original Nov 29 start at 90.2KG)
+  // Calculate target weight for a specific Saturday
+  // Prefers recalculated target if available, falls back to original target
   const getTargetWeightForSaturday = (saturdayDate: Date): number | null => {
     if (!mounted) return null;
     
-    // Use ORIGINAL start date and weight for all target calculations (not recalculation base)
-    // This ensures past Saturdays always have targets calculated
     const originalStartDate = new Date('2025-11-29T00:00:00+03:00'); // Nov 29, 2025
     const originalStartWeight = 90.2; // Starting weight
     
+    // Try recalculated target first (if Saturday is on or after recalculation base date)
+    const baseWeight = recalculationBaseWeight;
+    const baseDate = recalculationBaseDate;
+    const recalculatedTotalTime = goalDate.getTime() - baseDate.getTime();
+    const timeToSaturdayFromBase = saturdayDate.getTime() - baseDate.getTime();
+    
+    if (timeToSaturdayFromBase >= 0 && timeToSaturdayFromBase <= recalculatedTotalTime) {
+      const progress = recalculatedTotalTime > 0 ? timeToSaturdayFromBase / recalculatedTotalTime : 0;
+      const totalWeightToLose = baseWeight - targetWeight;
+      const weightToLoseBySaturday = progress * totalWeightToLose;
+      const recalculatedTarget = baseWeight - weightToLoseBySaturday;
+      return recalculatedTarget;
+    }
+    
+    // Fall back to original target
     const totalTime = goalDate.getTime() - originalStartDate.getTime();
     const timeToSaturday = saturdayDate.getTime() - originalStartDate.getTime();
     
-    // Allow any Saturday from start date to goal date
     if (timeToSaturday < 0 || timeToSaturday > totalTime) return null;
     
     const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
     const totalWeightToLose = originalStartWeight - targetWeight;
     const weightToLoseBySaturday = progress * totalWeightToLose;
-    const targetWeightForSaturday = originalStartWeight - weightToLoseBySaturday;
+    const originalTarget = originalStartWeight - weightToLoseBySaturday;
     
-    return targetWeightForSaturday;
+    return originalTarget;
   };
 
   return (
@@ -790,88 +803,145 @@ const WeightTracking = () => {
 
 
       {/* Saturday Target Weights */}
-      <div className="w-full max-w-md mt-8">
+      <div className="w-full max-w-2xl mt-8">
         <h2 className="text-xl font-semibold mb-4">Saturday Targets</h2>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {(() => {
-            const saturdays: { date: Date; targetWeight: number }[] = [];
+            const saturdays: { date: Date; originalTarget: number; recalculatedTarget: number | null }[] = [];
             
-            // Use ORIGINAL start date and weight for all target calculations (not recalculation base)
-            // This ensures Nov 29th and all past Saturdays are always included
+            // Original start date and weight
             const originalStartDate = new Date('2025-11-29T00:00:00+03:00'); // Nov 29, 2025
             const originalStartWeight = 90.2; // Starting weight
+            
+            // Recalculation base (current)
+            const baseWeight = recalculationBaseWeight;
+            const baseDate = recalculationBaseDate;
+            
             const endDate = new Date('2026-05-30T00:00:00+03:00'); // May 30th
             
-            // Start with original start date and weight (Nov 29th)
+            // Calculate original targets
+            const originalTotalTime = goalDate.getTime() - originalStartDate.getTime();
+            const originalTotalWeightToLose = originalStartWeight - targetWeight;
+            
+            // Calculate recalculated targets
+            const recalculatedTotalTime = goalDate.getTime() - baseDate.getTime();
+            const recalculatedTotalWeightToLose = baseWeight - targetWeight;
+            
+            // Start with original start date (Nov 29th) - add it first
+            const timeToStart = originalStartDate.getTime() - originalStartDate.getTime();
+            let recalculatedTargetStart: number | null = null;
+            const timeToStartFromBase = originalStartDate.getTime() - baseDate.getTime();
+            
+            if (timeToStartFromBase >= 0 && timeToStartFromBase <= recalculatedTotalTime) {
+              const progress = recalculatedTotalTime > 0 ? timeToStartFromBase / recalculatedTotalTime : 0;
+              const weightToLoseByStart = progress * recalculatedTotalWeightToLose;
+              recalculatedTargetStart = baseWeight - weightToLoseByStart;
+            }
+            
             saturdays.push({
               date: new Date(originalStartDate),
-              targetWeight: originalStartWeight
+              originalTarget: originalStartWeight,
+              recalculatedTarget: recalculatedTargetStart
             });
             
             // Find next Saturday after original start date
             let currentDate = new Date(originalStartDate);
             currentDate.setDate(currentDate.getDate() + 7); // Move to next Saturday
             
-            // Calculate target weights for each Saturday
-            // Starting from original start date at original weight, need to reach 80KG by June 1st
-            const totalTime = goalDate.getTime() - originalStartDate.getTime();
-            const totalWeightToLose = originalStartWeight - targetWeight;
-            
             while (currentDate <= endDate) {
+              // Calculate original target
               const timeToSaturday = currentDate.getTime() - originalStartDate.getTime();
-              if (timeToSaturday > 0 && timeToSaturday <= totalTime) {
-                const progress = totalTime > 0 ? timeToSaturday / totalTime : 0;
-                const weightToLoseBySaturday = progress * totalWeightToLose;
-                const targetWeightForSaturday = originalStartWeight - weightToLoseBySaturday;
-                
-                saturdays.push({
-                  date: new Date(currentDate),
-                  targetWeight: targetWeightForSaturday
-                });
+              let originalTarget = originalStartWeight;
+              
+              if (timeToSaturday > 0 && timeToSaturday <= originalTotalTime) {
+                const progress = originalTotalTime > 0 ? timeToSaturday / originalTotalTime : 0;
+                const weightToLoseBySaturday = progress * originalTotalWeightToLose;
+                originalTarget = originalStartWeight - weightToLoseBySaturday;
               }
+              
+              // Calculate recalculated target (only if Saturday is on or after recalculation base date)
+              let recalculatedTarget: number | null = null;
+              const timeToSaturdayFromBase = currentDate.getTime() - baseDate.getTime();
+              
+              if (timeToSaturdayFromBase >= 0 && timeToSaturdayFromBase <= recalculatedTotalTime) {
+                const progress = recalculatedTotalTime > 0 ? timeToSaturdayFromBase / recalculatedTotalTime : 0;
+                const weightToLoseBySaturday = progress * recalculatedTotalWeightToLose;
+                recalculatedTarget = baseWeight - weightToLoseBySaturday;
+              }
+              
+              saturdays.push({
+                date: new Date(currentDate),
+                originalTarget,
+                recalculatedTarget
+              });
               
               // Move to next Saturday
               currentDate.setDate(currentDate.getDate() + 7);
             }
             
-            // Add May 30th if it's not already included (it might be a Saturday or we need to add it anyway)
+            // Add May 30th if it's not already included
             const may30 = new Date('2026-05-30T00:00:00+03:00');
-            const may30Time = may30.getTime() - originalStartDate.getTime();
-            if (may30Time > 0 && may30Time <= totalTime) {
-              const may30Progress = totalTime > 0 ? may30Time / totalTime : 0;
-              const weightToLoseByMay30 = may30Progress * totalWeightToLose;
-              const targetWeightForMay30 = originalStartWeight - weightToLoseByMay30;
+            const may30Exists = saturdays.some(s => 
+              s.date.getFullYear() === may30.getFullYear() &&
+              s.date.getMonth() === may30.getMonth() &&
+              s.date.getDate() === may30.getDate()
+            );
+            
+            if (!may30Exists) {
+              const timeToMay30 = may30.getTime() - originalStartDate.getTime();
+              let originalTarget = originalStartWeight;
               
-              // Check if May 30th is already in the list
-              const may30Exists = saturdays.some(s => 
-                s.date.getFullYear() === may30.getFullYear() &&
-                s.date.getMonth() === may30.getMonth() &&
-                s.date.getDate() === may30.getDate()
-              );
-              
-              if (!may30Exists) {
-                saturdays.push({
-                  date: may30,
-                  targetWeight: targetWeightForMay30
-                });
+              if (timeToMay30 > 0 && timeToMay30 <= originalTotalTime) {
+                const progress = originalTotalTime > 0 ? timeToMay30 / originalTotalTime : 0;
+                const weightToLoseByMay30 = progress * originalTotalWeightToLose;
+                originalTarget = originalStartWeight - weightToLoseByMay30;
               }
+              
+              const timeToMay30FromBase = may30.getTime() - baseDate.getTime();
+              let recalculatedTarget: number | null = null;
+              
+              if (timeToMay30FromBase >= 0 && timeToMay30FromBase <= recalculatedTotalTime) {
+                const progress = recalculatedTotalTime > 0 ? timeToMay30FromBase / recalculatedTotalTime : 0;
+                const weightToLoseByMay30 = progress * recalculatedTotalWeightToLose;
+                recalculatedTarget = baseWeight - weightToLoseByMay30;
+              }
+              
+              saturdays.push({
+                date: may30,
+                originalTarget,
+                recalculatedTarget
+              });
             }
             
-            return saturdays.map((saturday, index) => (
-              <div
-                key={index}
-                className="flex justify-between items-center p-3 bg-gray-800 rounded-lg"
-              >
-                <span className="text-gray-400">
-                  {saturday.date.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-                <span className="text-lg font-semibold">{saturday.targetWeight.toFixed(1)} KG</span>
-              </div>
-            ));
+            return (
+              <>
+                {/* Header */}
+                <div className="grid grid-cols-3 gap-4 p-3 bg-gray-700 rounded-lg mb-2 sticky top-0">
+                  <span className="text-sm font-semibold text-gray-300">Date</span>
+                  <span className="text-sm font-semibold text-gray-300 text-center">Original Target</span>
+                  <span className="text-sm font-semibold text-gray-300 text-center">Recalculated Target</span>
+                </div>
+                {/* Rows */}
+                {saturdays.map((saturday, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-3 gap-4 items-center p-3 bg-gray-800 rounded-lg"
+                  >
+                    <span className="text-gray-400">
+                      {saturday.date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                    <span className="text-lg font-semibold text-center">{saturday.originalTarget.toFixed(1)} KG</span>
+                    <span className={`text-lg font-semibold text-center ${saturday.recalculatedTarget !== null ? 'text-blue-400' : 'text-gray-500'}`}>
+                      {saturday.recalculatedTarget !== null ? `${saturday.recalculatedTarget.toFixed(1)} KG` : '—'}
+                    </span>
+                  </div>
+                ))}
+              </>
+            );
           })()}
         </div>
       </div>
