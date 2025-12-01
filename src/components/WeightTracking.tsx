@@ -574,34 +574,35 @@ const WeightTracking = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600';
-                      textColor = 'text-white';
-                    }
-                    
-                    // Apply subtle transparency to past dates (similar to overlapping dates)
-                    if (isPast && day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600/35';
-                      textColor = 'text-gray-400';
-                    } else if (isPast) {
-                      bgColor = 'bg-gray-700/35';
-                      textColor = 'text-gray-400';
-                    }
-                    
-                    // Only apply colors to Saturdays with weight readings
+                    // Check for Saturday colors FIRST (before past date transparency)
                     const isSaturday = day.dateObj.getDay() === 6;
                     if (isSaturday && day.weight !== undefined) {
                       const saturdayTarget = getTargetWeightForSaturday(day.dateObj);
                       if (saturdayTarget !== null) {
                         if (day.weight <= saturdayTarget) {
-                          // Meets or beats target - green
+                          // Meets or beats target - green (keep color even if past)
                           bgColor = 'bg-green-600';
                           textColor = 'text-white';
                         } else {
-                          // Above target - red
+                          // Above target - red (keep color even if past)
                           bgColor = 'bg-red-600';
                           textColor = 'text-white';
                         }
+                      }
+                    } else {
+                      // Only apply default colors if not a Saturday with reading
+                      if (day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600';
+                        textColor = 'text-white';
+                      }
+                      
+                      // Apply subtle transparency to past dates (similar to overlapping dates)
+                      if (isPast && day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600/35';
+                        textColor = 'text-gray-400';
+                      } else if (isPast) {
+                        bgColor = 'bg-gray-700/35';
+                        textColor = 'text-gray-400';
                       }
                     }
                     
@@ -653,34 +654,35 @@ const WeightTracking = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600';
-                      textColor = 'text-white';
-                    }
-                    
-                    // Apply subtle transparency to past dates (similar to overlapping dates)
-                    if (isPast && day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600/35';
-                      textColor = 'text-gray-400';
-                    } else if (isPast) {
-                      bgColor = 'bg-gray-700/35';
-                      textColor = 'text-gray-400';
-                    }
-                    
-                    // Only apply colors to Saturdays with weight readings
+                    // Check for Saturday colors FIRST (before past date transparency)
                     const isSaturday = day.dateObj.getDay() === 6;
                     if (isSaturday && day.weight !== undefined) {
                       const saturdayTarget = getTargetWeightForSaturday(day.dateObj);
                       if (saturdayTarget !== null) {
                         if (day.weight <= saturdayTarget) {
-                          // Meets or beats target - green
+                          // Meets or beats target - green (keep color even if past)
                           bgColor = 'bg-green-600';
                           textColor = 'text-white';
                         } else {
-                          // Above target - red
+                          // Above target - red (keep color even if past)
                           bgColor = 'bg-red-600';
                           textColor = 'text-white';
                         }
+                      }
+                    } else {
+                      // Only apply default colors if not a Saturday with reading
+                      if (day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600';
+                        textColor = 'text-white';
+                      }
+                      
+                      // Apply subtle transparency to past dates (similar to overlapping dates)
+                      if (isPast && day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600/35';
+                        textColor = 'text-gray-400';
+                      } else if (isPast) {
+                        bgColor = 'bg-gray-700/35';
+                        textColor = 'text-gray-400';
                       }
                     }
                     
@@ -732,34 +734,35 @@ const WeightTracking = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600';
-                      textColor = 'text-white';
-                    }
-                    
-                    // Apply subtle transparency to past dates (similar to overlapping dates)
-                    if (isPast && day.isCurrentMonth) {
-                      bgColor = 'bg-gray-600/35';
-                      textColor = 'text-gray-400';
-                    } else if (isPast) {
-                      bgColor = 'bg-gray-700/35';
-                      textColor = 'text-gray-400';
-                    }
-                    
-                    // Only apply colors to Saturdays with weight readings
+                    // Check for Saturday colors FIRST (before past date transparency)
                     const isSaturday = day.dateObj.getDay() === 6;
                     if (isSaturday && day.weight !== undefined) {
                       const saturdayTarget = getTargetWeightForSaturday(day.dateObj);
                       if (saturdayTarget !== null) {
                         if (day.weight <= saturdayTarget) {
-                          // Meets or beats target - green
+                          // Meets or beats target - green (keep color even if past)
                           bgColor = 'bg-green-600';
                           textColor = 'text-white';
                         } else {
-                          // Above target - red
+                          // Above target - red (keep color even if past)
                           bgColor = 'bg-red-600';
                           textColor = 'text-white';
                         }
+                      }
+                    } else {
+                      // Only apply default colors if not a Saturday with reading
+                      if (day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600';
+                        textColor = 'text-white';
+                      }
+                      
+                      // Apply subtle transparency to past dates (similar to overlapping dates)
+                      if (isPast && day.isCurrentMonth) {
+                        bgColor = 'bg-gray-600/35';
+                        textColor = 'text-gray-400';
+                      } else if (isPast) {
+                        bgColor = 'bg-gray-700/35';
+                        textColor = 'text-gray-400';
                       }
                     }
                     
