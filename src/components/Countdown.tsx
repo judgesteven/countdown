@@ -91,7 +91,7 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 11, 5) && currentDate <= new Date(2025, 11, 7)) || // Dec 5 - Dec 7
         (currentDate >= new Date(2025, 11, 19) && currentDate <= new Date(2025, 11, 22)) || // Dec 19 - Dec 22
         (currentDate >= new Date(2025, 11, 30) && currentDate <= new Date(2025, 11, 31)) || // Dec 30 - Dec 31
-        (currentDate >= new Date(2026, 0, 2) && currentDate <= new Date(2026, 0, 9)) || // Jan 2 - Jan 9
+        (currentDate >= new Date(2026, 0, 5) && currentDate <= new Date(2026, 0, 9)) || // Jan 5 - Jan 9
         (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 1, 27) && currentDate <= new Date(2026, 2, 13)) || // Feb 27 - Mar 13
         (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
@@ -103,7 +103,8 @@ const Countdown = () => {
       // Check if date is in special red ranges
       const isSpecialRed = 
         (currentDate >= new Date(2025, 11, 23) && currentDate <= new Date(2025, 11, 29)) || // Dec 23 - Dec 29
-        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 1); // Jan 1, 2026
+        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 1) || // Jan 1, 2026
+        (currentDate >= new Date(2026, 0, 2) && currentDate <= new Date(2026, 0, 4)); // Jan 2 - Jan 4, 2026
       
       // Check if date is May 5th (special purple highlighting)
       const isSpecialPurple = 
