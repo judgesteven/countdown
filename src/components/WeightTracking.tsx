@@ -294,6 +294,25 @@ const WeightTracking = () => {
     };
   }, [activityEntries]);
 
+  // Calculate longest run
+  const longestRun = useMemo(() => {
+    if (activityEntries.length === 0) {
+      return { distance: 0, date: null };
+    }
+    const longest = activityEntries.reduce((max, entry) => 
+      entry.distance > max.distance ? entry : max
+    );
+    return {
+      distance: longest.distance,
+      date: longest.date
+    };
+  }, [activityEntries]);
+
+  // Count half marathons (>= 21.1 km)
+  const halfMarathonCount = useMemo(() => {
+    return activityEntries.filter(entry => entry.distance >= 21.1).length;
+  }, [activityEntries]);
+
   // Helper function to get activity for a specific date
   const getActivityForDate = (date: Date): ActivityEntry | null => {
     return activityEntries.find(e => isSameDate(e.date, date)) || null;
@@ -445,6 +464,41 @@ const WeightTracking = () => {
           <div className="text-center">
             <div className="text-3xl font-bold text-cyan-400">{totalSummary.avgVo2Max > 0 ? totalSummary.avgVo2Max.toFixed(1) : '0.0'}</div>
             <div className="text-sm text-gray-400 mt-1">Avg VO2 Max</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Longest Run and Half Marathon Cards */}
+      <div className="w-full max-w-6xl mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Longest Run Card */}
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h3 className="text-xl font-bold mb-4 text-center">Longest Run</h3>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-blue-400 mb-2">
+              {longestRun.distance > 0 ? longestRun.distance.toFixed(1) : '0.0'} km
+            </div>
+            {longestRun.date && (
+              <div className="text-sm text-gray-400">
+                {longestRun.date.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Half Marathon Count Card */}
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h3 className="text-xl font-bold mb-4 text-center">Half Marathons</h3>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-green-400 mb-2">
+              {halfMarathonCount}
+            </div>
+            <div className="text-sm text-gray-400">
+              {halfMarathonCount === 1 ? 'Half Marathon' : 'Half Marathons'} Completed
+            </div>
           </div>
         </div>
       </div>

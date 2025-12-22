@@ -267,7 +267,7 @@ const Countdown = () => {
           <img src="/Flag_of_Finland_new.png" alt="Finland flag" className="w-8 h-8" />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-8 text-center mb-12">
+      <div className="grid grid-cols-3 gap-8 text-center mb-20">
         <div className="flex flex-col items-center">
           <span className="text-8xl font-bold">{timeLeft.days}</span>
           <span className="text-xl">Days</span>
