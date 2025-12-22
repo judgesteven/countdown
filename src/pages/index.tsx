@@ -3,7 +3,7 @@ import Countdown from '@/components/Countdown';
 import WeightTracking from '@/components/WeightTracking';
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<'countdown' | 'weight'>('countdown');
+  const [currentPage, setCurrentPage] = useState<'countdown' | 'activity'>('countdown');
 
   return (
     <div className="min-h-screen bg-gray-900 relative">
@@ -21,14 +21,14 @@ export default function Home() {
             Countdown
           </button>
           <button
-            onClick={() => setCurrentPage('weight')}
+            onClick={() => setCurrentPage('activity')}
             className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
-              currentPage === 'weight'
+              currentPage === 'activity'
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            Weight
+            Activity
           </button>
         </div>
       </div>
