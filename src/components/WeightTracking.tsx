@@ -24,6 +24,38 @@ interface DayData {
   weight?: number;
 }
 
+const DATA_API_KEY = process.env.NEXT_PUBLIC_DATA_API_KEY || '';
+const apiHeaders = DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {};
+
+const serializeActivities = (entries: ActivityEntry[]) =>
+  entries.map((entry) => ({
+    ...entry,
+    date: entry.date.toISOString()
+  }));
+
+const serializeWeights = (entries: WeightEntry[]) =>
+  entries.map((entry) => ({
+    ...entry,
+    date: entry.date.toISOString()
+  }));
+
+const deserializeActivities = (entries: any[]): ActivityEntry[] =>
+  (entries || []).map((entry) => ({
+    date: new Date(entry.date),
+    distance: Number(entry.distance) || 0,
+    time: Number(entry.time) || 0,
+    pace: Number(entry.pace) || 0,
+    avgHeartRate: Number(entry.avgHeartRate) || 0,
+    maxHeartRate: Number(entry.maxHeartRate) || 0,
+    vo2Max: Number(entry.vo2Max) || 0
+  }));
+
+const deserializeWeights = (entries: any[]): WeightEntry[] =>
+  (entries || []).map((entry) => ({
+    date: new Date(entry.date),
+    weight: Number(entry.weight) || 0
+  }));
+
 const WeightTracking = () => {
   const [mounted, setMounted] = useState(false);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
@@ -49,54 +81,99 @@ const WeightTracking = () => {
     return ksaDate;
   };
 
+  const updateCurrentWeightFromEntries = useCallback((entries: WeightEntry[]) => {
+    if (entries.length > 0) {
+      const latest = [...entries].sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+      setCurrentWeight(latest.weight);
+    }
+  }, []);
+
+  const saveToLocal = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const activitiesToSave = serializeActivities(activities);
+      const weightsToSave = serializeWeights(weights);
+      localStorage.setItem('activityEntries', JSON.stringify(activitiesToSave));
+      localStorage.setItem('weightEntries', JSON.stringify(weightsToSave));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }, []);
+
+  const saveToRemote = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
+    try {
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...apiHeaders
+        },
+        body: JSON.stringify({
+          activityEntries: serializeActivities(activities),
+          weightEntries: serializeWeights(weights)
+        })
+      });
+    } catch (error) {
+      console.error('Error saving to remote storage:', error);
+    }
+  }, []);
+
+  const loadFromRemote = useCallback(async () => {
+    const res = await fetch('/api/data', { headers: { ...apiHeaders } });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch remote data: ${res.status}`);
+    }
+    const data = await res.json();
+    const activities = deserializeActivities(data.activityEntries || []);
+    const weights = deserializeWeights(data.weightEntries || []);
+    setActivityEntries(activities);
+    setWeightEntries(weights);
+    updateCurrentWeightFromEntries(weights);
+    saveToLocal(activities, weights);
+  }, [saveToLocal, updateCurrentWeightFromEntries]);
+
+  const loadFromLocal = useCallback(() => {
+    if (typeof window === 'undefined') return { activities: [], weights: [] };
+    let activities: ActivityEntry[] = [];
+    let weights: WeightEntry[] = [];
+    try {
+      const savedActivityEntries = localStorage.getItem('activityEntries');
+      if (savedActivityEntries) {
+        activities = deserializeActivities(JSON.parse(savedActivityEntries));
+        setActivityEntries(activities);
+      }
+      const savedWeightEntries = localStorage.getItem('weightEntries');
+      if (savedWeightEntries) {
+        weights = deserializeWeights(JSON.parse(savedWeightEntries));
+        setWeightEntries(weights);
+        updateCurrentWeightFromEntries(weights);
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      setError('Error loading saved data. Your data is safe in your browser.');
+    }
+    return { activities, weights };
+  }, [updateCurrentWeightFromEntries]);
+
   useEffect(() => {
     try {
-      setMounted(true);
       setError(null);
-      
-          // Load activity entries from localStorage
-          if (typeof window !== 'undefined') {
-            try {
-              const savedActivityEntries = localStorage.getItem('activityEntries');
-              if (savedActivityEntries) {
-                const entries = JSON.parse(savedActivityEntries).map((entry: any) => ({
-                  date: new Date(entry.date),
-                  distance: entry.distance,
-                  time: entry.time,
-                  pace: entry.pace,
-                  avgHeartRate: entry.avgHeartRate,
-                  maxHeartRate: entry.maxHeartRate,
-                  vo2Max: entry.vo2Max
-                }));
-                setActivityEntries(entries);
-              }
-              
-              // Load weight entries from localStorage
-              const savedWeightEntries = localStorage.getItem('weightEntries');
-              if (savedWeightEntries) {
-                const weightEntries = JSON.parse(savedWeightEntries).map((entry: any) => ({
-                  date: new Date(entry.date),
-                  weight: entry.weight
-                }));
-                setWeightEntries(weightEntries);
-                if (weightEntries.length > 0) {
-                  // Get the most recent weight
-                  const latest = weightEntries.sort((a: WeightEntry, b: WeightEntry) => 
-                    b.date.getTime() - a.date.getTime()
-                  )[0];
-                  setCurrentWeight(latest.weight);
-                }
-              }
-            } catch (error) {
-              console.error('Error loading entries:', error);
-              setError('Error loading saved data. Your data is safe in your browser.');
-            }
-          }
+      (async () => {
+        try {
+          await loadFromRemote();
+        } catch (error) {
+          console.warn('Remote load failed, falling back to local:', error);
+          loadFromLocal();
+        } finally {
+          setMounted(true);
+        }
+      })();
     } catch (error) {
       console.error('Error in useEffect:', error);
       setError('An error occurred. Please refresh the page.');
+      setMounted(true);
     }
-  }, []);
+  }, [loadFromLocal, loadFromRemote]);
 
   // Helper function to compare dates (year, month, day only)
   const isSameDate = (date1: Date, date2: Date): boolean => {
@@ -104,6 +181,11 @@ const WeightTracking = () => {
            date1.getMonth() === date2.getMonth() &&
            date1.getDate() === date2.getDate();
   };
+
+  const persistData = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
+    saveToLocal(activities, weights);
+    saveToRemote(activities, weights);
+  }, [saveToLocal, saveToRemote]);
 
   const handleAddWeight = () => {
     try {
@@ -138,24 +220,7 @@ const WeightTracking = () => {
       setWeightEntries(updatedEntries);
       setCurrentWeight(weight);
       setNewWeight('');
-
-      // Save to localStorage with error handling
-      if (typeof window !== 'undefined') {
-        try {
-          const entriesToSave = updatedEntries.map(entry => ({
-            date: entry.date.toISOString(),
-            weight: entry.weight
-          }));
-          localStorage.setItem('weightEntries', JSON.stringify(entriesToSave));
-        } catch (error) {
-          console.error('Error saving to localStorage:', error);
-          if (error instanceof DOMException && error.code === 22) {
-            alert('Storage limit reached. Please clear some old entries.');
-          } else {
-            alert('Error saving weight. Please try again.');
-          }
-        }
-      }
+      persistData(activityEntries, updatedEntries);
     } catch (error) {
       console.error('Error adding weight:', error);
       alert('An error occurred. Please try again.');
@@ -220,30 +285,7 @@ const WeightTracking = () => {
         maxHeartRate: '',
         vo2Max: ''
       });
-
-      // Save to localStorage with error handling
-      if (typeof window !== 'undefined') {
-        try {
-          // Convert dates to ISO strings for storage
-          const entriesToSave = updatedEntries.map(entry => ({
-            date: entry.date.toISOString(),
-            distance: entry.distance,
-            time: entry.time,
-            pace: entry.pace,
-            avgHeartRate: entry.avgHeartRate,
-            maxHeartRate: entry.maxHeartRate,
-            vo2Max: entry.vo2Max
-          }));
-          localStorage.setItem('activityEntries', JSON.stringify(entriesToSave));
-        } catch (error) {
-          console.error('Error saving to localStorage:', error);
-          if (error instanceof DOMException && error.code === 22) {
-            alert('Storage limit reached. Please clear some old entries.');
-          } else {
-            alert('Error saving activity. Please try again.');
-          }
-        }
-      }
+      persistData(updatedEntries, weightEntries);
     } catch (error) {
       console.error('Error adding activity:', error);
       alert('An error occurred. Please try again.');
