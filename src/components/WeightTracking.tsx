@@ -321,6 +321,18 @@ const WeightTracking = () => {
     };
   }, [currentWeight, targetWeight, startWeight]);
 
+  // Calculate distance progress towards 1000KM goal
+  const distanceProgress = useMemo(() => {
+    const goalDistance = 1000;
+    const currentDistance = totalSummary.totalDistance;
+    const progress = goalDistance > 0 ? (currentDistance / goalDistance) * 100 : 0;
+    const remainingDistance = goalDistance - currentDistance;
+    return {
+      progress: Math.max(0, Math.min(100, progress)),
+      remainingDistance: remainingDistance
+    };
+  }, [totalSummary.totalDistance]);
+
   // Calculate total activity summary
   const totalSummary = useMemo(() => {
     if (activityEntries.length === 0) {
@@ -532,6 +544,20 @@ const WeightTracking = () => {
           <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
             <div className="text-sm text-gray-400 mb-2">Half Marathons</div>
             <div className="text-4xl font-bold text-green-300">{halfMarathonCount}</div>
+          </div>
+        </div>
+        
+        {/* Distance Progress Bar */}
+        <div className="w-full mt-6">
+          <div className="flex items-center gap-4 mb-2">
+            <span className="text-sm text-gray-400 w-20 text-right">0KM</span>
+            <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
+              <div
+                className="bg-blue-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${distanceProgress.progress}%` }}
+              />
+            </div>
+            <span className="text-sm text-gray-400 w-20">1000KM</span>
           </div>
         </div>
       </div>
