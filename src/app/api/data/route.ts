@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       activityEntries: Array.isArray(data.activityEntries) ? data.activityEntries : [],
       weightEntries: Array.isArray(data.weightEntries) ? data.weightEntries : []
-    });
+    }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Error in GET /api/data:', error);
     return NextResponse.json({ error: 'Failed to load data', activityEntries: [], weightEntries: [] }, { status: 500 });
@@ -66,18 +66,49 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as Payload;
-    const payload: Payload = {
+    const incoming: Payload = {
       activityEntries: Array.isArray(body.activityEntries) ? body.activityEntries : [],
       weightEntries: Array.isArray(body.weightEntries) ? body.weightEntries : []
     };
 
-    await put(DATA_BLOB_KEY, JSON.stringify(payload), {
+    // Merge with existing data to avoid accidental overwrites.
+    let existing: Payload = { activityEntries: [], weightEntries: [] };
+    try {
+      const blobs = await list({ prefix: DATA_BLOB_KEY, limit: 1 });
+      if (blobs.blobs.length > 0) {
+        const url = blobs.blobs[0].url;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          existing = {
+            activityEntries: Array.isArray(data.activityEntries) ? data.activityEntries : [],
+            weightEntries: Array.isArray(data.weightEntries) ? data.weightEntries : []
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('POST /api/data: unable to load existing blob, proceeding with incoming only', err);
+    }
+
+    const mergeByDate = <T extends { date: string }>(existingArr: T[], incomingArr: T[]) => {
+      const map = new Map<string, T>();
+      existingArr.forEach((e) => map.set(e.date, e));
+      incomingArr.forEach((e) => map.set(e.date, e));
+      return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    };
+
+    const merged: Payload = {
+      activityEntries: mergeByDate(existing.activityEntries, incoming.activityEntries),
+      weightEntries: mergeByDate(existing.weightEntries, incoming.weightEntries)
+    };
+
+    await put(DATA_BLOB_KEY, JSON.stringify(merged), {
       access: 'public',
       addRandomSuffix: false,
       contentType: 'application/json'
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Error in POST /api/data:', error);
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
