@@ -25,7 +25,7 @@ interface DayData {
 }
 
 const DATA_API_KEY = process.env.NEXT_PUBLIC_DATA_API_KEY || '';
-const apiHeaders = DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {};
+const apiHeaders: HeadersInit = DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {};
 
 const serializeActivities = (entries: ActivityEntry[]) =>
   entries.map((entry) => ({
@@ -102,12 +102,13 @@ const WeightTracking = () => {
 
   const saveToRemote = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
     try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
+      };
       await fetch('/api/data', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...apiHeaders
-        },
+        headers,
         body: JSON.stringify({
           activityEntries: serializeActivities(activities),
           weightEntries: serializeWeights(weights)
@@ -119,7 +120,10 @@ const WeightTracking = () => {
   }, []);
 
   const loadFromRemote = useCallback(async () => {
-    const res = await fetch('/api/data', { headers: { ...apiHeaders } });
+    const headers: HeadersInit = {
+      ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
+    };
+    const res = await fetch('/api/data', { headers });
     if (!res.ok) {
       throw new Error(`Failed to fetch remote data: ${res.status}`);
     }
