@@ -115,7 +115,8 @@ export async function POST(req: NextRequest) {
     await put(DATA_BLOB_KEY, JSON.stringify(merged), {
       access: 'public',
       addRandomSuffix: false,
-      contentType: 'application/json'
+      contentType: 'application/json',
+      allowOverwrite: true
     });
 
     console.log('POST /api/data saved', {
