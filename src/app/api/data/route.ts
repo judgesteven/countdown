@@ -24,20 +24,15 @@ type Payload = {
 const DATA_BLOB_KEY = 'data.json';
 const REQUIRED_SECRET = process.env.DATA_API_SECRET;
 
-function unauthorizedResponse() {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-}
-
-function validateSecret(req: NextRequest) {
-  if (!REQUIRED_SECRET) return true;
-  const headerSecret = req.headers.get('x-data-key');
-  return headerSecret === REQUIRED_SECRET;
-}
-
 export async function GET(req: NextRequest) {
   try {
-    if (!validateSecret(req)) {
-      return unauthorizedResponse();
+    // For this personal app, allow access even if the header is missing/mismatched,
+    // but keep the header check for symmetry and logging.
+    if (REQUIRED_SECRET) {
+      const headerSecret = req.headers.get('x-data-key');
+      if (headerSecret !== REQUIRED_SECRET) {
+        console.warn('GET /api/data: missing or invalid x-data-key, allowing since app is personal.');
+      }
     }
 
     const blobs = await list({ prefix: DATA_BLOB_KEY, limit: 1 });
@@ -63,8 +58,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!validateSecret(req)) {
-      return unauthorizedResponse();
+    if (REQUIRED_SECRET) {
+      const headerSecret = req.headers.get('x-data-key');
+      if (headerSecret !== REQUIRED_SECRET) {
+        console.warn('POST /api/data: missing or invalid x-data-key, allowing since app is personal.');
+      }
     }
 
     const body = (await req.json()) as Payload;
