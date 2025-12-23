@@ -51,6 +51,10 @@ export async function GET(req: NextRequest) {
       throw new Error(`Failed to fetch blob: ${res.statusText}`);
     }
     const data = await res.json();
+    console.log('GET /api/data served', {
+      activityCount: Array.isArray(data.activityEntries) ? data.activityEntries.length : 0,
+      weightCount: Array.isArray(data.weightEntries) ? data.weightEntries.length : 0
+    });
     return NextResponse.json({
       activityEntries: Array.isArray(data.activityEntries) ? data.activityEntries : [],
       weightEntries: Array.isArray(data.weightEntries) ? data.weightEntries : []
@@ -81,7 +85,7 @@ export async function POST(req: NextRequest) {
     try {
       const blobs = await list({ prefix: DATA_BLOB_KEY, limit: 1 });
       if (blobs.blobs.length > 0) {
-        const url = blobs.blobs[0].url;
+        const url = `${blobs.blobs[0].url}?ts=${Date.now()}`;
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
@@ -111,6 +115,13 @@ export async function POST(req: NextRequest) {
       access: 'public',
       addRandomSuffix: false,
       contentType: 'application/json'
+    });
+
+    console.log('POST /api/data saved', {
+      incomingActivity: incoming.activityEntries.length,
+      incomingWeight: incoming.weightEntries.length,
+      mergedActivity: merged.activityEntries.length,
+      mergedWeight: merged.weightEntries.length
     });
 
     return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });

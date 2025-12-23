@@ -101,21 +101,22 @@ const WeightTracking = () => {
   }, []);
 
   const saveToRemote = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
-    try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
-      };
-      await fetch('/api/data', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          activityEntries: serializeActivities(activities),
-          weightEntries: serializeWeights(weights)
-        })
-      });
-    } catch (error) {
-      console.error('Error saving to remote storage:', error);
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
+    };
+    const res = await fetch('/api/data', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        activityEntries: serializeActivities(activities),
+        weightEntries: serializeWeights(weights)
+      })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Remote save failed', res.status, text);
+      throw new Error(`Remote save failed: ${res.status}`);
     }
   }, []);
 
@@ -125,6 +126,8 @@ const WeightTracking = () => {
     };
     const res = await fetch('/api/data', { headers, cache: 'no-store' });
     if (!res.ok) {
+      const text = await res.text();
+      console.error('Remote load failed', res.status, text);
       throw new Error(`Failed to fetch remote data: ${res.status}`);
     }
     const data = await res.json();
@@ -186,12 +189,12 @@ const WeightTracking = () => {
            date1.getDate() === date2.getDate();
   };
 
-  const persistData = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
+  const persistData = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
     saveToLocal(activities, weights);
-    saveToRemote(activities, weights);
+    await saveToRemote(activities, weights);
   }, [saveToLocal, saveToRemote]);
 
-  const handleAddWeight = () => {
+  const handleAddWeight = async () => {
     try {
       const weight = parseFloat(newWeight);
       if (isNaN(weight) || weight <= 0) {
@@ -224,7 +227,7 @@ const WeightTracking = () => {
       setWeightEntries(updatedEntries);
       setCurrentWeight(weight);
       setNewWeight('');
-      persistData(activityEntries, updatedEntries);
+      await persistData(activityEntries, updatedEntries);
     } catch (error) {
       console.error('Error adding weight:', error);
       alert('An error occurred. Please try again.');
@@ -237,7 +240,7 @@ const WeightTracking = () => {
     return entry ? entry.weight : null;
   };
 
-  const handleAddActivity = () => {
+  const handleAddActivity = async () => {
     try {
       const distance = parseFloat(newActivity.distance);
       const time = parseFloat(newActivity.time);
@@ -289,7 +292,7 @@ const WeightTracking = () => {
         maxHeartRate: '',
         vo2Max: ''
       });
-      persistData(updatedEntries, weightEntries);
+      await persistData(updatedEntries, weightEntries);
     } catch (error) {
       console.error('Error adding activity:', error);
       alert('An error occurred. Please try again.');
