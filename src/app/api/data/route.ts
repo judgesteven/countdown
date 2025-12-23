@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { list, put } from '@vercel/blob';
 
+// Force dynamic to avoid caching of blob data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+
 type ActivityEntry = {
   date: string;
   distance: number;
@@ -40,8 +45,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ activityEntries: [], weightEntries: [] });
     }
 
-    const url = blobs.blobs[0].url;
-    const res = await fetch(url);
+    const url = `${blobs.blobs[0].url}?ts=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) {
       throw new Error(`Failed to fetch blob: ${res.statusText}`);
     }

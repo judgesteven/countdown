@@ -123,7 +123,7 @@ const WeightTracking = () => {
     const headers: HeadersInit = {
       ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
     };
-    const res = await fetch('/api/data', { headers });
+    const res = await fetch('/api/data', { headers, cache: 'no-store' });
     if (!res.ok) {
       throw new Error(`Failed to fetch remote data: ${res.status}`);
     }
