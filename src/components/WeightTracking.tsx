@@ -242,12 +242,25 @@ const WeightTracking = () => {
 
   const handleAddActivity = async () => {
     try {
-      const distance = parseFloat(newActivity.distance);
-      const time = parseFloat(newActivity.time);
-      const pace = parseFloat(newActivity.pace);
-      const avgHeartRate = parseFloat(newActivity.avgHeartRate);
-      const maxHeartRate = parseFloat(newActivity.maxHeartRate);
-      const vo2Max = parseFloat(newActivity.vo2Max);
+      const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, toKSA(new Date())));
+      const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
+
+      const rawDistance = parseFloat(newActivity.distance);
+      const rawTime = parseFloat(newActivity.time);
+      const rawPace = parseFloat(newActivity.pace);
+      const rawAvgHeartRate = parseFloat(newActivity.avgHeartRate);
+      const rawMaxHeartRate = parseFloat(newActivity.maxHeartRate);
+      const rawVo2Max = parseFloat(newActivity.vo2Max);
+
+      // If updating an existing entry, allow blank fields to keep previous values.
+      const distance = !isNaN(rawDistance) ? rawDistance : existingEntry?.distance ?? NaN;
+      const time = !isNaN(rawTime) ? rawTime : existingEntry?.time ?? NaN;
+      const pace = !isNaN(rawPace)
+        ? rawPace
+        : existingEntry?.pace ?? (distance > 0 ? time / distance : 0);
+      const avgHeartRate = !isNaN(rawAvgHeartRate) ? rawAvgHeartRate : existingEntry?.avgHeartRate ?? 0;
+      const maxHeartRate = !isNaN(rawMaxHeartRate) ? rawMaxHeartRate : existingEntry?.maxHeartRate ?? 0;
+      const vo2Max = !isNaN(rawVo2Max) ? rawVo2Max : existingEntry?.vo2Max ?? 0;
 
       if (isNaN(distance) || distance <= 0) {
         alert('Please enter a valid distance');
@@ -261,8 +274,6 @@ const WeightTracking = () => {
       const now = toKSA(new Date());
       
       // Check if there's already an entry for today's date
-      const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, now));
-      
       let updatedEntries: ActivityEntry[];
       const newEntry: ActivityEntry = {
         date: now,
