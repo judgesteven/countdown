@@ -403,7 +403,7 @@ const WeightTracking = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-white">
-        <h1 className="text-4xl font-bold mb-8">Activity</h1>
+        <h1 className="text-4xl font-bold mb-8">There Is No Finish Line</h1>
         <p className="text-xl text-red-400 mb-4">{error}</p>
         <button
           onClick={() => window.location.reload()}
@@ -431,77 +431,46 @@ const WeightTracking = () => {
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-white px-4">
-      <h1 className="text-4xl font-bold mb-8">Activity</h1>
+      <h1 className="text-4xl font-bold mb-8">There Is No Finish Line</h1>
 
-      {/* Total Summary Card */}
-      <div className="w-full max-w-6xl mb-8 bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4 text-center">Total Activity</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-400">{totalSummary.totalDistance.toFixed(1)}</div>
-            <div className="text-sm text-gray-400 mt-1">Total Distance (km)</div>
+      {/* 2026 Totals Card */}
+      <div className="w-full max-w-6xl mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-xl">
+        <h2 className="text-2xl font-bold mb-4 text-center">2026 Totals</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">Number Runs</div>
+            <div className="text-4xl font-bold text-purple-400">{totalSummary.totalRuns}</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-400">{Math.floor(totalSummary.totalTime / 60)}h {Math.floor(totalSummary.totalTime % 60)}m</div>
-            <div className="text-sm text-gray-400 mt-1">Total Time</div>
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">Total Distance</div>
+            <div className="text-4xl font-bold text-blue-400">{totalSummary.totalDistance.toFixed(1)} km</div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-400">{totalSummary.totalRuns}</div>
-            <div className="text-sm text-gray-400 mt-1">Total Runs</div>
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">Total Duration</div>
+            <div className="text-4xl font-bold text-green-400">
+              {Math.floor(totalSummary.totalTime / 60)}h {Math.floor(totalSummary.totalTime % 60)}m
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-400">{totalSummary.avgPace > 0 ? totalSummary.avgPace.toFixed(2) : '0.00'}</div>
-            <div className="text-sm text-gray-400 mt-1">Avg Pace (min/km)</div>
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">VO2 Max</div>
+            <div className="text-4xl font-bold text-cyan-400">
+              {totalSummary.avgVo2Max > 0 ? totalSummary.avgVo2Max.toFixed(1) : '0.0'}
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-400">{totalSummary.avgHeartRate > 0 ? Math.round(totalSummary.avgHeartRate) : '0'}</div>
-            <div className="text-sm text-gray-400 mt-1">Avg Heart Rate (bpm)</div>
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">Longest Run</div>
+            <div className="text-4xl font-bold text-blue-300">
+              {longestRun.distance > 0 ? `${longestRun.distance.toFixed(1)} km` : '0.0 km'}
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-orange-400">{totalSummary.maxHeartRate > 0 ? Math.round(totalSummary.maxHeartRate) : '0'}</div>
-            <div className="text-sm text-gray-400 mt-1">Max Heart Rate (bpm)</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-cyan-400">{totalSummary.avgVo2Max > 0 ? totalSummary.avgVo2Max.toFixed(1) : '0.0'}</div>
-            <div className="text-sm text-gray-400 mt-1">Avg VO2 Max</div>
+          <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
+            <div className="text-sm text-gray-400 mb-2">Half Marathons</div>
+            <div className="text-4xl font-bold text-green-300">{halfMarathonCount}</div>
           </div>
         </div>
       </div>
 
-      {/* Longest Run and Half Marathon Cards */}
-      <div className="w-full max-w-6xl mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Longest Run Card */}
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-xl font-bold mb-4 text-center">Longest Run</h3>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-blue-400 mb-2">
-              {longestRun.distance > 0 ? longestRun.distance.toFixed(1) : '0.0'} km
-            </div>
-            {longestRun.date && (
-              <div className="text-sm text-gray-400">
-                {longestRun.date.toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Half Marathon Count Card */}
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-xl font-bold mb-4 text-center">Half Marathons</h3>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-green-400 mb-2">
-              {halfMarathonCount}
-            </div>
-            <div className="text-sm text-gray-400">
-              {halfMarathonCount === 1 ? 'Half Marathon' : 'Half Marathons'} Completed
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Longest Run and Half Marathon cards are now part of 2026 Totals */}
 
       {/* Add Activity Input */}
       <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6">
