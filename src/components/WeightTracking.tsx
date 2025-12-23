@@ -423,7 +423,13 @@ const WeightTracking = () => {
     { name: 'March 2026', year: 2026, month: 2 },
     { name: 'April 2026', year: 2026, month: 3 },
     { name: 'May 2026', year: 2026, month: 4 },
-    { name: 'June 2026', year: 2026, month: 5 }
+    { name: 'June 2026', year: 2026, month: 5 },
+    { name: 'July 2026', year: 2026, month: 6 },
+    { name: 'August 2026', year: 2026, month: 7 },
+    { name: 'September 2026', year: 2026, month: 8 },
+    { name: 'October 2026', year: 2026, month: 9 },
+    { name: 'November 2026', year: 2026, month: 10 },
+    { name: 'December 2026', year: 2026, month: 11 }
   ];
 
 
