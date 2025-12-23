@@ -321,18 +321,6 @@ const WeightTracking = () => {
     };
   }, [currentWeight, targetWeight, startWeight]);
 
-  // Calculate distance progress towards 1000KM goal
-  const distanceProgress = useMemo(() => {
-    const goalDistance = 1000;
-    const currentDistance = totalSummary.totalDistance;
-    const progress = goalDistance > 0 ? (currentDistance / goalDistance) * 100 : 0;
-    const remainingDistance = goalDistance - currentDistance;
-    return {
-      progress: Math.max(0, Math.min(100, progress)),
-      remainingDistance: remainingDistance
-    };
-  }, [totalSummary.totalDistance]);
-
   // Calculate total activity summary
   const totalSummary = useMemo(() => {
     if (activityEntries.length === 0) {
@@ -365,6 +353,18 @@ const WeightTracking = () => {
       avgVo2Max
     };
   }, [activityEntries]);
+
+  // Calculate distance progress towards 1000KM goal
+  const distanceProgress = useMemo(() => {
+    const goalDistance = 1000;
+    const currentDistance = totalSummary.totalDistance;
+    const progress = goalDistance > 0 ? (currentDistance / goalDistance) * 100 : 0;
+    const remainingDistance = goalDistance - currentDistance;
+    return {
+      progress: Math.max(0, Math.min(100, progress)),
+      remainingDistance: remainingDistance
+    };
+  }, [totalSummary.totalDistance]);
 
   // Calculate longest run
   const longestRun = useMemo(() => {
