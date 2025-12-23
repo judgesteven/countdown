@@ -100,10 +100,15 @@ export async function POST(req: NextRequest) {
       console.warn('POST /api/data: unable to load existing blob, proceeding with incoming only', err);
     }
 
+    const dateKey = (d: string) => {
+      const dt = new Date(d);
+      return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
+    };
+
     const mergeByDate = <T extends { date: string }>(existingArr: T[], incomingArr: T[]) => {
       const map = new Map<string, T>();
-      existingArr.forEach((e) => map.set(e.date, e));
-      incomingArr.forEach((e) => map.set(e.date, e));
+      existingArr.forEach((e) => map.set(dateKey(e.date), e));
+      incomingArr.forEach((e) => map.set(dateKey(e.date), e));
       return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     };
 
