@@ -48,7 +48,8 @@ export async function GET(req: NextRequest) {
     const url = `${blobs.blobs[0].url}?ts=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) {
-      throw new Error(`Failed to fetch blob: ${res.statusText}`);
+      const text = await res.text();
+      throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText} ${text}`);
     }
     const data = await res.json();
     console.log('GET /api/data served', {
@@ -127,7 +128,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Error in POST /api/data:', error);
-    return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to save data';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

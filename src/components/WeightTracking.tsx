@@ -116,7 +116,7 @@ const WeightTracking = () => {
     if (!res.ok) {
       const text = await res.text();
       console.error('Remote save failed', res.status, text);
-      throw new Error(`Remote save failed: ${res.status}`);
+      throw new Error(`Remote save failed: ${res.status} ${text}`);
     }
   }, []);
 
@@ -128,7 +128,7 @@ const WeightTracking = () => {
     if (!res.ok) {
       const text = await res.text();
       console.error('Remote load failed', res.status, text);
-      throw new Error(`Failed to fetch remote data: ${res.status}`);
+      throw new Error(`Failed to fetch remote data: ${res.status} ${text}`);
     }
     const data = await res.json();
     const activities = deserializeActivities(data.activityEntries || []);
