@@ -91,8 +91,22 @@ const WeightTracking = () => {
   const saveToLocal = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
     if (typeof window === 'undefined') return;
     try {
-      const activitiesToSave = serializeActivities(activities);
-      const weightsToSave = serializeWeights(weights);
+      // Filter to only include 2026 data (starting from Jan 1, 2026)
+      const startDate = new Date(2026, 0, 1);
+      startDate.setHours(0, 0, 0, 0);
+      const filteredActivities = activities.filter(entry => {
+        const entryDate = new Date(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
+        return entryDate >= startDate;
+      });
+      const filteredWeights = weights.filter(entry => {
+        const entryDate = new Date(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
+        return entryDate >= startDate;
+      });
+      
+      const activitiesToSave = serializeActivities(filteredActivities);
+      const weightsToSave = serializeWeights(filteredWeights);
       localStorage.setItem('activityEntries', JSON.stringify(activitiesToSave));
       localStorage.setItem('weightEntries', JSON.stringify(weightsToSave));
     } catch (error) {
@@ -105,12 +119,27 @@ const WeightTracking = () => {
       'Content-Type': 'application/json',
       ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
     };
+    
+    // Filter to only include 2026 data (starting from Jan 1, 2026)
+    const startDate = new Date(2026, 0, 1);
+    startDate.setHours(0, 0, 0, 0);
+    const filteredActivities = activities.filter(entry => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate >= startDate;
+    });
+    const filteredWeights = weights.filter(entry => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate >= startDate;
+    });
+    
     const res = await fetch('/api/data', {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        activityEntries: serializeActivities(activities),
-        weightEntries: serializeWeights(weights)
+        activityEntries: serializeActivities(filteredActivities),
+        weightEntries: serializeWeights(filteredWeights)
       })
     });
     if (!res.ok) {
@@ -131,8 +160,23 @@ const WeightTracking = () => {
       throw new Error(`Failed to fetch remote data: ${res.status} ${text}`);
     }
     const data = await res.json();
-    const activities = deserializeActivities(data.activityEntries || []);
-    const weights = deserializeWeights(data.weightEntries || []);
+    const allActivities = deserializeActivities(data.activityEntries || []);
+    const allWeights = deserializeWeights(data.weightEntries || []);
+    
+    // Filter to only include 2026 data (starting from Jan 1, 2026)
+    const startDate = new Date(2026, 0, 1);
+    startDate.setHours(0, 0, 0, 0);
+    const activities = allActivities.filter(entry => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate >= startDate;
+    });
+    const weights = allWeights.filter(entry => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate >= startDate;
+    });
+    
     setActivityEntries(activities);
     setWeightEntries(weights);
     updateCurrentWeightFromEntries(weights);
@@ -146,12 +190,28 @@ const WeightTracking = () => {
     try {
       const savedActivityEntries = localStorage.getItem('activityEntries');
       if (savedActivityEntries) {
-        activities = deserializeActivities(JSON.parse(savedActivityEntries));
+        const allActivities = deserializeActivities(JSON.parse(savedActivityEntries));
+        // Filter to only include 2026 data (starting from Jan 1, 2026)
+        const startDate = new Date(2026, 0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        activities = allActivities.filter(entry => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate >= startDate;
+        });
         setActivityEntries(activities);
       }
       const savedWeightEntries = localStorage.getItem('weightEntries');
       if (savedWeightEntries) {
-        weights = deserializeWeights(JSON.parse(savedWeightEntries));
+        const allWeights = deserializeWeights(JSON.parse(savedWeightEntries));
+        // Filter to only include 2026 data (starting from Jan 1, 2026)
+        const startDate = new Date(2026, 0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        weights = allWeights.filter(entry => {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0, 0, 0, 0);
+          return entryDate >= startDate;
+        });
         setWeightEntries(weights);
         updateCurrentWeightFromEntries(weights);
       }
@@ -489,7 +549,6 @@ const WeightTracking = () => {
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const calendarMonths = [
-    { name: 'December 2025', year: 2025, month: 11 },
     { name: 'January 2026', year: 2026, month: 0 },
     { name: 'February 2026', year: 2026, month: 1 },
     { name: 'March 2026', year: 2026, month: 2 },

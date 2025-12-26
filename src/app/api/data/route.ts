@@ -52,13 +52,28 @@ export async function GET(req: NextRequest) {
       throw new Error(`Failed to fetch blob: ${res.status} ${res.statusText} ${text}`);
     }
     const data = await res.json();
+    
+    // Filter out December 2025 data - only keep 2026 data (starting from Jan 1, 2026)
+    const startDate = new Date('2026-01-01T00:00:00Z');
+    const filter2026Data = <T extends { date: string }>(entries: T[]): T[] => {
+      return entries.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= startDate;
+      });
+    };
+    
+    const allActivities = Array.isArray(data.activityEntries) ? data.activityEntries : [];
+    const allWeights = Array.isArray(data.weightEntries) ? data.weightEntries : [];
+    const filteredActivities = filter2026Data(allActivities);
+    const filteredWeights = filter2026Data(allWeights);
+    
     console.log('GET /api/data served', {
-      activityCount: Array.isArray(data.activityEntries) ? data.activityEntries.length : 0,
-      weightCount: Array.isArray(data.weightEntries) ? data.weightEntries.length : 0
+      activityCount: filteredActivities.length,
+      weightCount: filteredWeights.length
     });
     return NextResponse.json({
-      activityEntries: Array.isArray(data.activityEntries) ? data.activityEntries : [],
-      weightEntries: Array.isArray(data.weightEntries) ? data.weightEntries : []
+      activityEntries: filteredActivities,
+      weightEntries: filteredWeights
     }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Error in GET /api/data:', error);
@@ -117,7 +132,21 @@ export async function POST(req: NextRequest) {
       weightEntries: mergeByDate(existing.weightEntries, incoming.weightEntries)
     };
 
-    await put(DATA_BLOB_KEY, JSON.stringify(merged), {
+    // Filter out December 2025 data - only keep 2026 data (starting from Jan 1, 2026)
+    const startDate = new Date('2026-01-01T00:00:00Z');
+    const filter2026Data = <T extends { date: string }>(entries: T[]): T[] => {
+      return entries.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= startDate;
+      });
+    };
+
+    const filtered: Payload = {
+      activityEntries: filter2026Data(merged.activityEntries),
+      weightEntries: filter2026Data(merged.weightEntries)
+    };
+
+    await put(DATA_BLOB_KEY, JSON.stringify(filtered), {
       access: 'public',
       addRandomSuffix: false,
       contentType: 'application/json',
@@ -127,8 +156,8 @@ export async function POST(req: NextRequest) {
     console.log('POST /api/data saved', {
       incomingActivity: incoming.activityEntries.length,
       incomingWeight: incoming.weightEntries.length,
-      mergedActivity: merged.activityEntries.length,
-      mergedWeight: merged.weightEntries.length
+      filteredActivity: filtered.activityEntries.length,
+      filteredWeight: filtered.weightEntries.length
     });
 
     return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });
