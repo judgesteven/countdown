@@ -71,9 +71,6 @@ const WeightTracking = () => {
   });
   const [newWeight, setNewWeight] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [dailyGems, setDailyGems] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
-  const [gemAnimations, setGemAnimations] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
-  const [lastResetDate, setLastResetDate] = useState<string>('');
 
   const targetWeight = 80;
   const startWeight = 90;
@@ -83,75 +80,6 @@ const WeightTracking = () => {
     const ksaDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
     return ksaDate;
   };
-
-  // Helper function to get today's date string in KSA timezone
-  const getTodayDateString = useCallback(() => {
-    const now = toKSA(new Date());
-    return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-  }, []);
-
-  // Check and update daily gems based on today's distance
-  const checkDailyMissions = useCallback((activities: ActivityEntry[]) => {
-    const today = toKSA(new Date());
-    const todayStart = new Date(today);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(today);
-    todayEnd.setHours(23, 59, 59, 999);
-
-    // Get today's total distance
-    const todayActivities = activities.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= todayStart && entryDate <= todayEnd;
-    });
-    const todayDistance = todayActivities.reduce((sum, entry) => sum + entry.distance, 0);
-
-    // Use functional update to get current gems state
-    setDailyGems((currentGems) => {
-      // Check which gems should be earned
-      const newGems: { [key: number]: boolean } = { 6: false, 10: false, 15: false };
-      const newAnimations: { [key: number]: boolean } = { 6: false, 10: false, 15: false };
-
-      if (todayDistance >= 6) {
-        newGems[6] = true;
-        if (!currentGems[6]) {
-          newAnimations[6] = true;
-        }
-      }
-      if (todayDistance >= 10) {
-        newGems[10] = true;
-        if (!currentGems[10]) {
-          newAnimations[10] = true;
-        }
-      }
-      if (todayDistance >= 15) {
-        newGems[15] = true;
-        if (!currentGems[15]) {
-          newAnimations[15] = true;
-        }
-      }
-
-      // Trigger animations for newly earned gems
-      if (newAnimations[6] || newAnimations[10] || newAnimations[15]) {
-        setGemAnimations(newAnimations);
-        // Clear animations after animation completes
-        setTimeout(() => {
-          setGemAnimations({ 6: false, 10: false, 15: false });
-        }, 1000);
-      }
-
-      return newGems;
-    });
-  }, []);
-
-  // Reset gems at midnight
-  const checkMidnightReset = useCallback(() => {
-    const todayString = getTodayDateString();
-    if (lastResetDate !== todayString) {
-      setDailyGems({ 6: false, 10: false, 15: false });
-      setGemAnimations({ 6: false, 10: false, 15: false });
-      setLastResetDate(todayString);
-    }
-  }, [lastResetDate, getTodayDateString]);
 
   const updateCurrentWeightFromEntries = useCallback((entries: WeightEntry[]) => {
     if (entries.length > 0) {
@@ -297,21 +225,6 @@ const WeightTracking = () => {
   useEffect(() => {
     try {
       setError(null);
-      // Initialize last reset date
-      const todayString = getTodayDateString();
-      setLastResetDate(todayString);
-      
-      // Load gems from localStorage
-      if (typeof window !== 'undefined') {
-        const savedGems = localStorage.getItem('dailyGems');
-        const savedResetDate = localStorage.getItem('lastResetDate');
-        if (savedGems && savedResetDate === todayString) {
-          setDailyGems(JSON.parse(savedGems));
-        } else {
-          setDailyGems({ 6: false, 10: false, 15: false });
-        }
-      }
-
       (async () => {
         try {
           await loadFromRemote();
@@ -327,27 +240,7 @@ const WeightTracking = () => {
       setError('An error occurred. Please refresh the page.');
       setMounted(true);
     }
-  }, [loadFromLocal, loadFromRemote, getTodayDateString]);
-
-  // Check for midnight reset and update gems when activities change
-  useEffect(() => {
-    checkMidnightReset();
-    checkDailyMissions(activityEntries, dailyGems);
-    
-    // Save gems to localStorage
-    if (typeof window !== 'undefined' && lastResetDate) {
-      localStorage.setItem('dailyGems', JSON.stringify(dailyGems));
-      localStorage.setItem('lastResetDate', lastResetDate);
-    }
-
-    // Set up interval to check for midnight reset
-    const interval = setInterval(() => {
-      checkMidnightReset();
-      checkDailyMissions(activityEntries, dailyGems);
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [activityEntries, checkMidnightReset, checkDailyMissions, dailyGems, lastResetDate]);
+  }, [loadFromLocal, loadFromRemote]);
 
   // Helper function to compare dates (year, month, day only)
   const isSameDate = (date1: Date, date2: Date): boolean => {
@@ -470,10 +363,6 @@ const WeightTracking = () => {
         maxHeartRate: '',
         vo2Max: ''
       });
-      
-      // Check daily missions immediately after adding activity
-      checkDailyMissions(updatedEntries);
-      
       await persistData(updatedEntries, weightEntries);
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -733,35 +622,6 @@ const WeightTracking = () => {
       </div>
 
       {/* Longest Run and Half Marathon cards are now part of 2026 Totals */}
-
-      {/* Daily Step Rewards - Gems */}
-      <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h2 className="text-2xl font-bold mb-4 text-center">Daily Step Rewards</h2>
-        <div className="flex justify-center items-center gap-8">
-          {[6, 10, 15].map((goal) => (
-            <div key={goal} className="flex flex-col items-center">
-              <div
-                className={`text-6xl transition-all duration-500 ${
-                  dailyGems[goal]
-                    ? 'text-green-400 scale-110'
-                    : 'text-cyan-400 scale-100'
-                } ${
-                  gemAnimations[goal] ? 'animate-pulse' : ''
-                }`}
-                style={{
-                  animation: gemAnimations[goal] ? 'pulse 1s ease-in-out' : 'none'
-                }}
-              >
-                💎
-              </div>
-              <div className="text-sm text-gray-400 mt-2">{goal}km</div>
-            </div>
-          ))}
-        </div>
-        <div className="text-center text-sm text-gray-500 mt-4">
-          Gems reset at midnight (KSA time)
-        </div>
-      </div>
 
       {/* Add Activity Input */}
       <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6">
