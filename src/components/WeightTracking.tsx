@@ -961,7 +961,7 @@ const WeightTracking = () => {
                           <span className="font-semibold text-sm">{day.date}</span>
                           {day.targetDistance && (
                             <div className="text-xs mt-0.5 text-orange-300 font-semibold bg-orange-900/30 px-1 py-0.5 rounded">
-                              Target: {day.targetDistance}k
+                              Plan: {day.targetDistance}k
                             </div>
                           )}
                           {day.activity && (
@@ -981,7 +981,7 @@ const WeightTracking = () => {
                                   </div>
                                   {day.targetDistance && (
                                     <div className="flex justify-between">
-                                      <span className="text-gray-400">Target:</span>
+                                      <span className="text-gray-400">Plan:</span>
                                       <span className="text-orange-300 font-semibold">{day.targetDistance} km</span>
                                     </div>
                                   )}
