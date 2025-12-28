@@ -8,6 +8,8 @@ interface ActivityEntry {
   avgHeartRate: number; // bpm
   maxHeartRate: number; // bpm
   vo2Max: number;
+  kind?: 'recorded' | 'target'; // 'recorded' is default for backward compatibility
+  source?: string; // For idempotency: e.g., 'training-plan-2026-q1'
 }
 
 interface WeightEntry {
@@ -21,6 +23,7 @@ interface DayData {
   isPast: boolean;
   dateObj: Date;
   activity?: ActivityEntry;
+  target?: ActivityEntry; // Separate target entry
   weight?: number;
 }
 
@@ -47,7 +50,9 @@ const deserializeActivities = (entries: any[]): ActivityEntry[] =>
     pace: Number(entry.pace) || 0,
     avgHeartRate: Number(entry.avgHeartRate) || 0,
     maxHeartRate: Number(entry.maxHeartRate) || 0,
-    vo2Max: Number(entry.vo2Max) || 0
+    vo2Max: Number(entry.vo2Max) || 0,
+    kind: entry.kind || 'recorded',
+    source: entry.source
   }));
 
 const deserializeWeights = (entries: any[]): WeightEntry[] =>
@@ -71,6 +76,10 @@ const WeightTracking = () => {
   });
   const [newWeight, setNewWeight] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [dailyGems, setDailyGems] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
+  const [gemAnimations, setGemAnimations] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
+  const [lastResetDate, setLastResetDate] = useState<string>('');
+  const [showTargets, setShowTargets] = useState<boolean>(true);
 
   const targetWeight = 80;
   const startWeight = 90;
@@ -80,6 +89,75 @@ const WeightTracking = () => {
     const ksaDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
     return ksaDate;
   };
+
+  // Helper function to get today's date string in KSA timezone
+  const getTodayDateString = useCallback(() => {
+    const now = toKSA(new Date());
+    return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+  }, []);
+
+  // Check and update daily gems based on today's distance
+  const checkDailyMissions = useCallback((activities: ActivityEntry[]) => {
+    const today = toKSA(new Date());
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(today);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Get today's total distance
+    const todayActivities = activities.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= todayStart && entryDate <= todayEnd;
+    });
+    const todayDistance = todayActivities.reduce((sum, entry) => sum + entry.distance, 0);
+
+    // Use functional update to get current gems state
+    setDailyGems((currentGems) => {
+      // Check which gems should be earned
+      const newGems: { [key: number]: boolean } = { 6: false, 10: false, 15: false };
+      const newAnimations: { [key: number]: boolean } = { 6: false, 10: false, 15: false };
+
+      if (todayDistance >= 6) {
+        newGems[6] = true;
+        if (!currentGems[6]) {
+          newAnimations[6] = true;
+        }
+      }
+      if (todayDistance >= 10) {
+        newGems[10] = true;
+        if (!currentGems[10]) {
+          newAnimations[10] = true;
+        }
+      }
+      if (todayDistance >= 15) {
+        newGems[15] = true;
+        if (!currentGems[15]) {
+          newAnimations[15] = true;
+        }
+      }
+
+      // Trigger animations for newly earned gems
+      if (newAnimations[6] || newAnimations[10] || newAnimations[15]) {
+        setGemAnimations(newAnimations);
+        // Clear animations after animation completes
+        setTimeout(() => {
+          setGemAnimations({ 6: false, 10: false, 15: false });
+        }, 1000);
+      }
+
+      return newGems;
+    });
+  }, []);
+
+  // Reset gems at midnight
+  const checkMidnightReset = useCallback(() => {
+    const todayString = getTodayDateString();
+    if (lastResetDate !== todayString) {
+      setDailyGems({ 6: false, 10: false, 15: false });
+      setGemAnimations({ 6: false, 10: false, 15: false });
+      setLastResetDate(todayString);
+    }
+  }, [lastResetDate, getTodayDateString]);
 
   const updateCurrentWeightFromEntries = useCallback((entries: WeightEntry[]) => {
     if (entries.length > 0) {
@@ -225,6 +303,21 @@ const WeightTracking = () => {
   useEffect(() => {
     try {
       setError(null);
+      // Initialize last reset date
+      const todayString = getTodayDateString();
+      setLastResetDate(todayString);
+      
+      // Load gems from localStorage
+      if (typeof window !== 'undefined') {
+        const savedGems = localStorage.getItem('dailyGems');
+        const savedResetDate = localStorage.getItem('lastResetDate');
+        if (savedGems && savedResetDate === todayString) {
+          setDailyGems(JSON.parse(savedGems));
+        } else {
+          setDailyGems({ 6: false, 10: false, 15: false });
+        }
+      }
+
       (async () => {
         try {
           await loadFromRemote();
@@ -240,7 +333,27 @@ const WeightTracking = () => {
       setError('An error occurred. Please refresh the page.');
       setMounted(true);
     }
-  }, [loadFromLocal, loadFromRemote]);
+  }, [loadFromLocal, loadFromRemote, getTodayDateString]);
+
+  // Check for midnight reset and update gems when activities change
+  useEffect(() => {
+    checkMidnightReset();
+    checkDailyMissions(activityEntries, dailyGems);
+    
+    // Save gems to localStorage
+    if (typeof window !== 'undefined' && lastResetDate) {
+      localStorage.setItem('dailyGems', JSON.stringify(dailyGems));
+      localStorage.setItem('lastResetDate', lastResetDate);
+    }
+
+    // Set up interval to check for midnight reset
+    const interval = setInterval(() => {
+      checkMidnightReset();
+      checkDailyMissions(activityEntries, dailyGems);
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [activityEntries, checkMidnightReset, checkDailyMissions, dailyGems, lastResetDate]);
 
   // Helper function to compare dates (year, month, day only)
   const isSameDate = (date1: Date, date2: Date): boolean => {
@@ -342,7 +455,8 @@ const WeightTracking = () => {
         pace: isNaN(pace) ? time / distance : pace,
         avgHeartRate: isNaN(avgHeartRate) ? 0 : avgHeartRate,
         maxHeartRate: isNaN(maxHeartRate) ? 0 : maxHeartRate,
-        vo2Max: isNaN(vo2Max) ? 0 : vo2Max
+        vo2Max: isNaN(vo2Max) ? 0 : vo2Max,
+        kind: 'recorded' // User-added activities are always recorded
       };
 
       if (existingEntryIndex >= 0) {
@@ -363,6 +477,10 @@ const WeightTracking = () => {
         maxHeartRate: '',
         vo2Max: ''
       });
+      
+      // Check daily missions immediately after adding activity
+      checkDailyMissions(updatedEntries);
+      
       await persistData(updatedEntries, weightEntries);
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -381,9 +499,10 @@ const WeightTracking = () => {
     };
   }, [currentWeight, targetWeight, startWeight]);
 
-  // Calculate total activity summary
+  // Calculate total activity summary (only recorded activities, not targets)
   const totalSummary = useMemo(() => {
-    if (activityEntries.length === 0) {
+    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
+    if (recordedActivities.length === 0) {
       return {
         totalDistance: 0,
         totalTime: 0,
@@ -395,13 +514,13 @@ const WeightTracking = () => {
       };
     }
 
-    const totalDistance = activityEntries.reduce((sum, entry) => sum + entry.distance, 0);
-    const totalTime = activityEntries.reduce((sum, entry) => sum + entry.time, 0);
-    const totalRuns = activityEntries.length;
+    const totalDistance = recordedActivities.reduce((sum, entry) => sum + entry.distance, 0);
+    const totalTime = recordedActivities.reduce((sum, entry) => sum + entry.time, 0);
+    const totalRuns = recordedActivities.length;
     const avgPace = totalDistance > 0 ? totalTime / totalDistance : 0;
-    const avgHeartRate = activityEntries.reduce((sum, entry) => sum + entry.avgHeartRate, 0) / totalRuns;
-    const maxHeartRate = Math.max(...activityEntries.map(e => e.maxHeartRate));
-    const avgVo2Max = activityEntries.reduce((sum, entry) => sum + entry.vo2Max, 0) / totalRuns;
+    const avgHeartRate = recordedActivities.reduce((sum, entry) => sum + entry.avgHeartRate, 0) / totalRuns;
+    const maxHeartRate = Math.max(...recordedActivities.map(e => e.maxHeartRate));
+    const avgVo2Max = recordedActivities.reduce((sum, entry) => sum + entry.vo2Max, 0) / totalRuns;
 
     return {
       totalDistance,
@@ -426,12 +545,13 @@ const WeightTracking = () => {
     };
   }, [totalSummary.totalDistance]);
 
-  // Calculate longest run
+  // Calculate longest run (only recorded activities)
   const longestRun = useMemo(() => {
-    if (activityEntries.length === 0) {
+    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
+    if (recordedActivities.length === 0) {
       return { distance: 0, date: null };
     }
-    const longest = activityEntries.reduce((max, entry) => 
+    const longest = recordedActivities.reduce((max, entry) => 
       entry.distance > max.distance ? entry : max
     );
     return {
@@ -440,21 +560,33 @@ const WeightTracking = () => {
     };
   }, [activityEntries]);
 
-  // Count half marathons (>= 21.1 km)
+  // Count half marathons (>= 21.1 km) - only recorded activities
   const halfMarathonCount = useMemo(() => {
-    return activityEntries.filter(entry => entry.distance >= 21.1).length;
+    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
+    return recordedActivities.filter(entry => entry.distance >= 21.1).length;
   }, [activityEntries]);
 
   // Helper function to get activity for a specific date
   const getActivityForDate = (date: Date): ActivityEntry | null => {
+    // Prefer recorded activities over targets
+    const recorded = activityEntries.find(e => isSameDate(e.date, date) && (e.kind === 'recorded' || !e.kind));
+    if (recorded) return recorded;
     return activityEntries.find(e => isSameDate(e.date, date)) || null;
   };
 
-  // Helper function to get monthly summary
+  // Helper function to get target for a specific date
+  const getTargetForDate = (date: Date): ActivityEntry | null => {
+    // Only return if there's no recorded activity for this date
+    const recorded = activityEntries.find(e => isSameDate(e.date, date) && (e.kind === 'recorded' || !e.kind));
+    if (recorded) return null;
+    return activityEntries.find(e => isSameDate(e.date, date) && e.kind === 'target') || null;
+  };
+
+  // Helper function to get monthly summary (only recorded activities)
   const getMonthlySummary = (year: number, month: number) => {
     const monthEntries = activityEntries.filter(entry => {
       const entryDate = entry.date;
-      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month && (entry.kind === 'recorded' || !entry.kind);
     });
 
     if (monthEntries.length === 0) {
@@ -507,6 +639,7 @@ const WeightTracking = () => {
       const isPast = currentDateOnly < todayDate;
       
       const activityData = getActivityForDate(currentDate);
+      const targetData = getTargetForDate(currentDate);
       const weightData = getWeightForDate(currentDate);
       
       days.push({
@@ -515,6 +648,7 @@ const WeightTracking = () => {
         isPast,
         dateObj: new Date(currentDate),
         activity: activityData || undefined,
+        target: targetData || undefined,
         weight: weightData || undefined
       });
       
@@ -622,6 +756,35 @@ const WeightTracking = () => {
       </div>
 
       {/* Longest Run and Half Marathon cards are now part of 2026 Totals */}
+
+      {/* Daily Step Rewards - Gems */}
+      <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h2 className="text-2xl font-bold mb-4 text-center">Daily Step Rewards</h2>
+        <div className="flex justify-center items-center gap-8">
+          {[6, 10, 15].map((goal) => (
+            <div key={goal} className="flex flex-col items-center">
+              <div
+                className={`text-6xl transition-all duration-500 ${
+                  dailyGems[goal]
+                    ? 'text-green-400 scale-110'
+                    : 'text-cyan-400 scale-100'
+                } ${
+                  gemAnimations[goal] ? 'animate-pulse' : ''
+                }`}
+                style={{
+                  animation: gemAnimations[goal] ? 'pulse 1s ease-in-out' : 'none'
+                }}
+              >
+                💎
+              </div>
+              <div className="text-sm text-gray-400 mt-2">{goal}km</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-center text-sm text-gray-500 mt-4">
+          Gems reset at midnight (KSA time)
+        </div>
+      </div>
 
       {/* Add Activity Input */}
       <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6">
@@ -757,6 +920,19 @@ const WeightTracking = () => {
         </div>
       </div>
 
+      {/* Show Targets Toggle */}
+      <div className="w-full max-w-6xl mt-8 mb-4 flex justify-end">
+        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showTargets}
+            onChange={(e) => setShowTargets(e.target.checked)}
+            className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+          />
+          <span className="text-sm">Show Targets</span>
+        </label>
+      </div>
+
       {/* Calendar View - 1 month per row */}
       <div className="w-full max-w-6xl mt-8">
         {/* One month per row */}
@@ -831,29 +1007,33 @@ const WeightTracking = () => {
                         textColor = 'text-gray-400';
                       }
                       
-                      // Highlight days with activity - make it very visible
+                      // Highlight days with recorded activity - make it very visible
                       if (day.activity) {
                         bgColor = 'bg-blue-600';
                         textColor = 'text-white';
                       }
                       
+                      // Show target with different styling (only if showTargets is true and no recorded activity)
+                      const hasTarget = showTargets && day.target && !day.activity;
+                      
                       return (
                         <div
                           key={index}
                           className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${
-                            day.activity ? 'border-blue-400 border-opacity-75' : 'border-transparent'
+                            day.activity ? 'border-blue-400 border-opacity-75' : hasTarget ? 'border-dashed border-gray-400 border-opacity-50' : 'border-transparent'
                           } group`}
                         >
                           <span className="font-semibold text-sm">{day.date}</span>
                           {day.activity && (
                             <>
+                              <div className="text-xs mt-0.5 text-blue-200 font-semibold">Recorded</div>
                               <div className="text-sm mt-1 font-bold text-white">
                                 {day.activity.distance.toFixed(1)}km
                               </div>
                               {/* Hover popup with all activity data */}
                               <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
                                 <div className="text-base font-semibold text-white mb-3 border-b border-gray-700 pb-2">
-                                  Activity Details
+                                  Recorded Activity
                                 </div>
                                 <div className="space-y-2 text-sm">
                                   <div className="flex justify-between">
@@ -879,6 +1059,35 @@ const WeightTracking = () => {
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">VO2 Max:</span>
                                     <span className="text-white font-semibold">{day.activity.vo2Max > 0 ? day.activity.vo2Max.toFixed(1) : 'N/A'}</span>
+                                  </div>
+                                </div>
+                                {/* Arrow pointing down */}
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                  <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                          {hasTarget && (
+                            <>
+                              <div className="text-xs mt-0.5 text-gray-400 font-semibold">Target</div>
+                              <div className="text-sm mt-1 font-semibold text-gray-300">
+                                {day.target.distance.toFixed(1)}km
+                              </div>
+                              <div className="text-xs text-gray-400">Easy</div>
+                              {/* Hover popup with target data */}
+                              <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
+                                <div className="text-base font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2">
+                                  Planned Target
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-400">Distance:</span>
+                                    <span className="text-gray-300 font-semibold">{day.target.distance.toFixed(1)} km</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-400">Type:</span>
+                                    <span className="text-gray-300 font-semibold">Easy</span>
                                   </div>
                                 </div>
                                 {/* Arrow pointing down */}
