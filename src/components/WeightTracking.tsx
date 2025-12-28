@@ -22,6 +22,7 @@ interface DayData {
   dateObj: Date;
   activity?: ActivityEntry;
   weight?: number;
+  targetDistance?: number;
 }
 
 const DATA_API_KEY = process.env.NEXT_PUBLIC_DATA_API_KEY || '';
@@ -450,6 +451,117 @@ const WeightTracking = () => {
     return activityEntries.find(e => isSameDate(e.date, date)) || null;
   };
 
+  // Helper function to get target distance for a specific date
+  const getTargetDistanceForDate = (date: Date): number | null => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    // Only return targets for Jan, Feb, Mar 2026
+    if (year !== 2026 || month < 0 || month > 2) {
+      return null;
+    }
+
+    // Month 1 (Jan): 3 runs/week on Tue/Thu/Sat
+    if (month === 0) {
+      // Week 1 (starting Mon 2026-01-05): Tue 6k, Thu 6k, Sat 10k
+      if (day >= 5 && day <= 11) {
+        if (dayOfWeek === 2) return 6; // Tuesday
+        if (dayOfWeek === 4) return 6; // Thursday
+        if (dayOfWeek === 6) return 10; // Saturday
+      }
+      // Week 2 (starting Mon 2026-01-12): Tue 6k, Thu 7k, Sat 11k
+      else if (day >= 12 && day <= 18) {
+        if (dayOfWeek === 2) return 6; // Tuesday
+        if (dayOfWeek === 4) return 7; // Thursday
+        if (dayOfWeek === 6) return 11; // Saturday
+      }
+      // Week 3 (starting Mon 2026-01-19): Tue 7k, Thu 7k, Sat 12k
+      else if (day >= 19 && day <= 25) {
+        if (dayOfWeek === 2) return 7; // Tuesday
+        if (dayOfWeek === 4) return 7; // Thursday
+        if (dayOfWeek === 6) return 12; // Saturday
+      }
+      // Week 4 (starting Mon 2026-01-26): Tue 7k, Thu 8k, Sat 14k
+      else if (day >= 26 && day <= 31) {
+        if (dayOfWeek === 2) return 7; // Tuesday
+        if (dayOfWeek === 4) return 8; // Thursday
+        if (dayOfWeek === 6) return 14; // Saturday
+      }
+    }
+
+    // Month 2 (Feb): 4 runs/week on Mon/Wed/Fri/Sat
+    if (month === 1) {
+      // Week 5 (starting Mon 2026-02-02): Mon 7k, Wed 7k, Fri 6k, Sat 14k
+      if (day >= 2 && day <= 8) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 3) return 7; // Wednesday
+        if (dayOfWeek === 5) return 6; // Friday
+        if (dayOfWeek === 6) return 14; // Saturday
+      }
+      // Week 6 (starting Mon 2026-02-09): Mon 7k, Wed 8k, Fri 7k, Sat 15k
+      else if (day >= 9 && day <= 15) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 7; // Friday
+        if (dayOfWeek === 6) return 15; // Saturday
+      }
+      // Week 7 (starting Mon 2026-02-16): Mon 8k, Wed 8k, Fri 7k, Sat 16k
+      else if (day >= 16 && day <= 22) {
+        if (dayOfWeek === 1) return 8; // Monday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 7; // Friday
+        if (dayOfWeek === 6) return 16; // Saturday
+      }
+      // Week 8 (starting Mon 2026-02-23): Mon 8k, Wed 8k, Fri 8k, Sat 18k
+      else if (day >= 23 && day <= 29) {
+        if (dayOfWeek === 1) return 8; // Monday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 8; // Friday
+        if (dayOfWeek === 6) return 18; // Saturday
+      }
+    }
+
+    // Month 3 (Mar): 5 runs/week on Mon/Tue/Thu/Fri/Sat
+    if (month === 2) {
+      // Week 9 (starting Mon 2026-03-02): Mon 7k, Tue 8k, Thu 7k, Fri 6k, Sat 18k
+      if (day >= 2 && day <= 8) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 2) return 8; // Tuesday
+        if (dayOfWeek === 4) return 7; // Thursday
+        if (dayOfWeek === 5) return 6; // Friday
+        if (dayOfWeek === 6) return 18; // Saturday
+      }
+      // Week 10 (starting Mon 2026-03-09): Mon 8k, Tue 8k, Thu 8k, Fri 6k, Sat 19k
+      else if (day >= 9 && day <= 15) {
+        if (dayOfWeek === 1) return 8; // Monday
+        if (dayOfWeek === 2) return 8; // Tuesday
+        if (dayOfWeek === 4) return 8; // Thursday
+        if (dayOfWeek === 5) return 6; // Friday
+        if (dayOfWeek === 6) return 19; // Saturday
+      }
+      // Week 11 (starting Mon 2026-03-16): Mon 8k, Tue 9k, Thu 8k, Fri 7k, Sat 20k
+      else if (day >= 16 && day <= 22) {
+        if (dayOfWeek === 1) return 8; // Monday
+        if (dayOfWeek === 2) return 9; // Tuesday
+        if (dayOfWeek === 4) return 8; // Thursday
+        if (dayOfWeek === 5) return 7; // Friday
+        if (dayOfWeek === 6) return 20; // Saturday
+      }
+      // Week 12 (starting Mon 2026-03-23): Mon 8k, Tue 9k, Thu 8k, Fri 8k, Sat 21k
+      else if (day >= 23 && day <= 29) {
+        if (dayOfWeek === 1) return 8; // Monday
+        if (dayOfWeek === 2) return 9; // Tuesday
+        if (dayOfWeek === 4) return 8; // Thursday
+        if (dayOfWeek === 5) return 8; // Friday
+        if (dayOfWeek === 6) return 21; // Saturday
+      }
+    }
+
+    return null;
+  };
+
   // Helper function to get monthly summary
   const getMonthlySummary = (year: number, month: number) => {
     const monthEntries = activityEntries.filter(entry => {
@@ -508,6 +620,7 @@ const WeightTracking = () => {
       
       const activityData = getActivityForDate(currentDate);
       const weightData = getWeightForDate(currentDate);
+      const targetDistance = getTargetDistanceForDate(currentDate);
       
       days.push({
         date: currentDate.getDate(),
@@ -515,7 +628,8 @@ const WeightTracking = () => {
         isPast,
         dateObj: new Date(currentDate),
         activity: activityData || undefined,
-        weight: weightData || undefined
+        weight: weightData || undefined,
+        targetDistance: targetDistance || undefined
       });
       
       currentDate.setDate(currentDate.getDate() + 1);
@@ -845,6 +959,11 @@ const WeightTracking = () => {
                           } group`}
                         >
                           <span className="font-semibold text-sm">{day.date}</span>
+                          {day.targetDistance && (
+                            <div className="text-xs mt-0.5 text-orange-300 font-semibold bg-orange-900/30 px-1 py-0.5 rounded">
+                              Target: {day.targetDistance}k
+                            </div>
+                          )}
                           {day.activity && (
                             <>
                               <div className="text-sm mt-1 font-bold text-white">
@@ -860,6 +979,12 @@ const WeightTracking = () => {
                                     <span className="text-gray-400">Distance:</span>
                                     <span className="text-white font-semibold">{day.activity.distance.toFixed(1)} km</span>
                                   </div>
+                                  {day.targetDistance && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-400">Target:</span>
+                                      <span className="text-orange-300 font-semibold">{day.targetDistance} km</span>
+                                    </div>
+                                  )}
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Time:</span>
                                     <span className="text-white font-semibold">{Math.floor(day.activity.time)} min</span>
