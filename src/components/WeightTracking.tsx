@@ -338,7 +338,7 @@ const WeightTracking = () => {
   // Check for midnight reset and update gems when activities change
   useEffect(() => {
     checkMidnightReset();
-    checkDailyMissions(activityEntries, dailyGems);
+    checkDailyMissions(activityEntries);
     
     // Save gems to localStorage
     if (typeof window !== 'undefined' && lastResetDate) {
@@ -349,7 +349,7 @@ const WeightTracking = () => {
     // Set up interval to check for midnight reset
     const interval = setInterval(() => {
       checkMidnightReset();
-      checkDailyMissions(activityEntries, dailyGems);
+      checkDailyMissions(activityEntries);
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
@@ -1068,7 +1068,7 @@ const WeightTracking = () => {
                               </div>
                             </>
                           )}
-                          {hasTarget && (
+                          {hasTarget && day.target && (
                             <>
                               <div className="text-xs mt-0.5 text-gray-400 font-semibold">Target</div>
                               <div className="text-sm mt-1 font-semibold text-gray-300">
