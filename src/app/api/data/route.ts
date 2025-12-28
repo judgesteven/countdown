@@ -14,8 +14,6 @@ type ActivityEntry = {
   avgHeartRate: number;
   maxHeartRate: number;
   vo2Max: number;
-  kind?: 'recorded' | 'target'; // 'recorded' is default for backward compatibility
-  source?: string; // For idempotency: e.g., 'training-plan-2026-q1'
 };
 
 type WeightEntry = {
@@ -122,50 +120,6 @@ export async function POST(req: NextRequest) {
       return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`;
     };
 
-    // For activities: merge by date+kind+source for idempotency
-    // Recorded activities (kind='recorded' or undefined) take precedence over targets on same date
-    // Targets with same date+source are deduplicated
-    const mergeActivities = (existingArr: ActivityEntry[], incomingArr: ActivityEntry[]): ActivityEntry[] => {
-      const map = new Map<string, ActivityEntry>();
-      
-      // First, add all existing entries
-      existingArr.forEach((e) => {
-        const kind = e.kind || 'recorded';
-        const source = e.source || '';
-        // For recorded activities, use date only (one per date)
-        // For targets, use date+source for idempotency
-        const key = kind === 'recorded' ? `recorded-${dateKey(e.date)}` : `target-${dateKey(e.date)}-${source}`;
-        map.set(key, e);
-      });
-      
-      // Then, merge incoming entries
-      incomingArr.forEach((e) => {
-        const kind = e.kind || 'recorded';
-        const source = e.source || '';
-        const key = kind === 'recorded' ? `recorded-${dateKey(e.date)}` : `target-${dateKey(e.date)}-${source}`;
-        
-        // If there's already a recorded activity for this date, don't overwrite with target
-        const existingRecordedKey = `recorded-${dateKey(e.date)}`;
-        if (kind === 'target' && map.has(existingRecordedKey)) {
-          // Skip this target, recorded takes precedence
-          return;
-        }
-        
-        // If incoming is recorded, it takes precedence over any target
-        if (kind === 'recorded') {
-          // Remove any targets for this date
-          const targetKeys = Array.from(map.keys()).filter(k => 
-            k.startsWith(`target-${dateKey(e.date)}-`)
-          );
-          targetKeys.forEach(k => map.delete(k));
-        }
-        
-        map.set(key, e);
-      });
-      
-      return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    };
-
     const mergeByDate = <T extends { date: string }>(existingArr: T[], incomingArr: T[]) => {
       const map = new Map<string, T>();
       existingArr.forEach((e) => map.set(dateKey(e.date), e));
@@ -174,7 +128,7 @@ export async function POST(req: NextRequest) {
     };
 
     const merged: Payload = {
-      activityEntries: mergeActivities(existing.activityEntries, incoming.activityEntries),
+      activityEntries: mergeByDate(existing.activityEntries, incoming.activityEntries),
       weightEntries: mergeByDate(existing.weightEntries, incoming.weightEntries)
     };
 

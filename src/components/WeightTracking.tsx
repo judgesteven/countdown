@@ -8,8 +8,6 @@ interface ActivityEntry {
   avgHeartRate: number; // bpm
   maxHeartRate: number; // bpm
   vo2Max: number;
-  kind?: 'recorded' | 'target'; // 'recorded' is default for backward compatibility
-  source?: string; // For idempotency: e.g., 'training-plan-2026-q1'
 }
 
 interface WeightEntry {
@@ -23,7 +21,6 @@ interface DayData {
   isPast: boolean;
   dateObj: Date;
   activity?: ActivityEntry;
-  target?: ActivityEntry; // Separate target entry
   weight?: number;
 }
 
@@ -50,9 +47,7 @@ const deserializeActivities = (entries: any[]): ActivityEntry[] =>
     pace: Number(entry.pace) || 0,
     avgHeartRate: Number(entry.avgHeartRate) || 0,
     maxHeartRate: Number(entry.maxHeartRate) || 0,
-    vo2Max: Number(entry.vo2Max) || 0,
-    kind: entry.kind || 'recorded',
-    source: entry.source
+    vo2Max: Number(entry.vo2Max) || 0
   }));
 
 const deserializeWeights = (entries: any[]): WeightEntry[] =>
@@ -79,7 +74,6 @@ const WeightTracking = () => {
   const [dailyGems, setDailyGems] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
   const [gemAnimations, setGemAnimations] = useState<{ [key: number]: boolean }>({ 6: false, 10: false, 15: false });
   const [lastResetDate, setLastResetDate] = useState<string>('');
-  const [showTargets, setShowTargets] = useState<boolean>(true);
 
   const targetWeight = 80;
   const startWeight = 90;
@@ -338,7 +332,7 @@ const WeightTracking = () => {
   // Check for midnight reset and update gems when activities change
   useEffect(() => {
     checkMidnightReset();
-    checkDailyMissions(activityEntries);
+    checkDailyMissions(activityEntries, dailyGems);
     
     // Save gems to localStorage
     if (typeof window !== 'undefined' && lastResetDate) {
@@ -349,7 +343,7 @@ const WeightTracking = () => {
     // Set up interval to check for midnight reset
     const interval = setInterval(() => {
       checkMidnightReset();
-      checkDailyMissions(activityEntries);
+      checkDailyMissions(activityEntries, dailyGems);
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
@@ -455,8 +449,7 @@ const WeightTracking = () => {
         pace: isNaN(pace) ? time / distance : pace,
         avgHeartRate: isNaN(avgHeartRate) ? 0 : avgHeartRate,
         maxHeartRate: isNaN(maxHeartRate) ? 0 : maxHeartRate,
-        vo2Max: isNaN(vo2Max) ? 0 : vo2Max,
-        kind: 'recorded' // User-added activities are always recorded
+        vo2Max: isNaN(vo2Max) ? 0 : vo2Max
       };
 
       if (existingEntryIndex >= 0) {
@@ -499,10 +492,9 @@ const WeightTracking = () => {
     };
   }, [currentWeight, targetWeight, startWeight]);
 
-  // Calculate total activity summary (only recorded activities, not targets)
+  // Calculate total activity summary
   const totalSummary = useMemo(() => {
-    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
-    if (recordedActivities.length === 0) {
+    if (activityEntries.length === 0) {
       return {
         totalDistance: 0,
         totalTime: 0,
@@ -514,13 +506,13 @@ const WeightTracking = () => {
       };
     }
 
-    const totalDistance = recordedActivities.reduce((sum, entry) => sum + entry.distance, 0);
-    const totalTime = recordedActivities.reduce((sum, entry) => sum + entry.time, 0);
-    const totalRuns = recordedActivities.length;
+    const totalDistance = activityEntries.reduce((sum, entry) => sum + entry.distance, 0);
+    const totalTime = activityEntries.reduce((sum, entry) => sum + entry.time, 0);
+    const totalRuns = activityEntries.length;
     const avgPace = totalDistance > 0 ? totalTime / totalDistance : 0;
-    const avgHeartRate = recordedActivities.reduce((sum, entry) => sum + entry.avgHeartRate, 0) / totalRuns;
-    const maxHeartRate = Math.max(...recordedActivities.map(e => e.maxHeartRate));
-    const avgVo2Max = recordedActivities.reduce((sum, entry) => sum + entry.vo2Max, 0) / totalRuns;
+    const avgHeartRate = activityEntries.reduce((sum, entry) => sum + entry.avgHeartRate, 0) / totalRuns;
+    const maxHeartRate = Math.max(...activityEntries.map(e => e.maxHeartRate));
+    const avgVo2Max = activityEntries.reduce((sum, entry) => sum + entry.vo2Max, 0) / totalRuns;
 
     return {
       totalDistance,
@@ -545,13 +537,12 @@ const WeightTracking = () => {
     };
   }, [totalSummary.totalDistance]);
 
-  // Calculate longest run (only recorded activities)
+  // Calculate longest run
   const longestRun = useMemo(() => {
-    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
-    if (recordedActivities.length === 0) {
+    if (activityEntries.length === 0) {
       return { distance: 0, date: null };
     }
-    const longest = recordedActivities.reduce((max, entry) => 
+    const longest = activityEntries.reduce((max, entry) => 
       entry.distance > max.distance ? entry : max
     );
     return {
@@ -560,33 +551,21 @@ const WeightTracking = () => {
     };
   }, [activityEntries]);
 
-  // Count half marathons (>= 21.1 km) - only recorded activities
+  // Count half marathons (>= 21.1 km)
   const halfMarathonCount = useMemo(() => {
-    const recordedActivities = activityEntries.filter(e => e.kind === 'recorded' || !e.kind);
-    return recordedActivities.filter(entry => entry.distance >= 21.1).length;
+    return activityEntries.filter(entry => entry.distance >= 21.1).length;
   }, [activityEntries]);
 
   // Helper function to get activity for a specific date
   const getActivityForDate = (date: Date): ActivityEntry | null => {
-    // Prefer recorded activities over targets
-    const recorded = activityEntries.find(e => isSameDate(e.date, date) && (e.kind === 'recorded' || !e.kind));
-    if (recorded) return recorded;
     return activityEntries.find(e => isSameDate(e.date, date)) || null;
   };
 
-  // Helper function to get target for a specific date
-  const getTargetForDate = (date: Date): ActivityEntry | null => {
-    // Only return if there's no recorded activity for this date
-    const recorded = activityEntries.find(e => isSameDate(e.date, date) && (e.kind === 'recorded' || !e.kind));
-    if (recorded) return null;
-    return activityEntries.find(e => isSameDate(e.date, date) && e.kind === 'target') || null;
-  };
-
-  // Helper function to get monthly summary (only recorded activities)
+  // Helper function to get monthly summary
   const getMonthlySummary = (year: number, month: number) => {
     const monthEntries = activityEntries.filter(entry => {
       const entryDate = entry.date;
-      return entryDate.getFullYear() === year && entryDate.getMonth() === month && (entry.kind === 'recorded' || !entry.kind);
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
     });
 
     if (monthEntries.length === 0) {
@@ -639,7 +618,6 @@ const WeightTracking = () => {
       const isPast = currentDateOnly < todayDate;
       
       const activityData = getActivityForDate(currentDate);
-      const targetData = getTargetForDate(currentDate);
       const weightData = getWeightForDate(currentDate);
       
       days.push({
@@ -648,7 +626,6 @@ const WeightTracking = () => {
         isPast,
         dateObj: new Date(currentDate),
         activity: activityData || undefined,
-        target: targetData || undefined,
         weight: weightData || undefined
       });
       
@@ -920,19 +897,6 @@ const WeightTracking = () => {
         </div>
       </div>
 
-      {/* Show Targets Toggle */}
-      <div className="w-full max-w-6xl mt-8 mb-4 flex justify-end">
-        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showTargets}
-            onChange={(e) => setShowTargets(e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
-          />
-          <span className="text-sm">Show Targets</span>
-        </label>
-      </div>
-
       {/* Calendar View - 1 month per row */}
       <div className="w-full max-w-6xl mt-8">
         {/* One month per row */}
@@ -1007,33 +971,29 @@ const WeightTracking = () => {
                         textColor = 'text-gray-400';
                       }
                       
-                      // Highlight days with recorded activity - make it very visible
+                      // Highlight days with activity - make it very visible
                       if (day.activity) {
                         bgColor = 'bg-blue-600';
                         textColor = 'text-white';
                       }
                       
-                      // Show target with different styling (only if showTargets is true and no recorded activity)
-                      const hasTarget = showTargets && day.target && !day.activity;
-                      
                       return (
                         <div
                           key={index}
                           className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${
-                            day.activity ? 'border-blue-400 border-opacity-75' : hasTarget ? 'border-dashed border-gray-400 border-opacity-50' : 'border-transparent'
+                            day.activity ? 'border-blue-400 border-opacity-75' : 'border-transparent'
                           } group`}
                         >
                           <span className="font-semibold text-sm">{day.date}</span>
                           {day.activity && (
                             <>
-                              <div className="text-xs mt-0.5 text-blue-200 font-semibold">Recorded</div>
                               <div className="text-sm mt-1 font-bold text-white">
                                 {day.activity.distance.toFixed(1)}km
                               </div>
                               {/* Hover popup with all activity data */}
                               <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
                                 <div className="text-base font-semibold text-white mb-3 border-b border-gray-700 pb-2">
-                                  Recorded Activity
+                                  Activity Details
                                 </div>
                                 <div className="space-y-2 text-sm">
                                   <div className="flex justify-between">
@@ -1059,35 +1019,6 @@ const WeightTracking = () => {
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">VO2 Max:</span>
                                     <span className="text-white font-semibold">{day.activity.vo2Max > 0 ? day.activity.vo2Max.toFixed(1) : 'N/A'}</span>
-                                  </div>
-                                </div>
-                                {/* Arrow pointing down */}
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                                  <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {hasTarget && day.target && (
-                            <>
-                              <div className="text-xs mt-0.5 text-gray-400 font-semibold">Target</div>
-                              <div className="text-sm mt-1 font-semibold text-gray-300">
-                                {day.target.distance.toFixed(1)}km
-                              </div>
-                              <div className="text-xs text-gray-400">Easy</div>
-                              {/* Hover popup with target data */}
-                              <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
-                                <div className="text-base font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2">
-                                  Planned Target
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Distance:</span>
-                                    <span className="text-gray-300 font-semibold">{day.target.distance.toFixed(1)} km</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Type:</span>
-                                    <span className="text-gray-300 font-semibold">Easy</span>
                                   </div>
                                 </div>
                                 {/* Arrow pointing down */}
