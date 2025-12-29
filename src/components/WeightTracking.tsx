@@ -928,6 +928,7 @@ const WeightTracking = () => {
                       const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                       const dayOnly = new Date(day.dateObj.getFullYear(), day.dateObj.getMonth(), day.dateObj.getDate());
                       const isPast = dayOnly < todayOnly;
+                      const isToday = dayOnly.getTime() === todayOnly.getTime();
                       
                       let bgColor = 'bg-gray-700';
                       let textColor = 'text-gray-400';
@@ -951,12 +952,19 @@ const WeightTracking = () => {
                         textColor = 'text-white';
                       }
                       
+                      // Add subtle highlight for today's date
+                      let borderClass = 'border-transparent';
+                      if (isToday) {
+                        borderClass = 'border-yellow-400 border-opacity-60';
+                      } else if (day.activity) {
+                        borderClass = 'border-blue-400 border-opacity-75';
+                      }
+                      const todayBg = isToday ? 'bg-yellow-500/20' : '';
+                      
                       return (
                         <div
                           key={index}
-                          className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${
-                            day.activity ? 'border-blue-400 border-opacity-75' : 'border-transparent'
-                          } group`}
+                          className={`${bgColor} ${todayBg} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${borderClass} group`}
                         >
                           <span className="font-semibold text-sm">{day.date}</span>
                           {day.targetDistance && (
