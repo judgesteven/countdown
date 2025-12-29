@@ -284,13 +284,13 @@ const Countdown = () => {
       
       {/* Monthly Calendar View */}
       <div className="w-full max-w-7xl">
-        {/* Show one month per row on mobile, 3 per row on larger screens */}
-        {months.map((monthData) => {
-          const monthDays = getMonthData(monthData.year, monthData.month);
-          
-          return (
-            <div key={`${monthData.year}-${monthData.month}`} className="mb-6">
-              <div className="bg-gray-800 rounded-lg p-4">
+        {/* First row: December, January, February - 1 column on mobile, 3 columns on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {months.slice(0, 3).map((monthData) => {
+            const monthDays = getMonthData(monthData.year, monthData.month);
+            
+            return (
+              <div key={`${monthData.year}-${monthData.month}`} className="bg-gray-800 rounded-lg p-4">
                 <h2 className="text-xl font-bold text-center mb-3">{monthData.name}</h2>
                 
                 {/* Weekday headers */}
@@ -353,9 +353,82 @@ const Countdown = () => {
                   })}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        
+        {/* Second row: March, April, May - 1 column on mobile, 3 columns on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {months.slice(3, 6).map((monthData) => {
+            const monthDays = getMonthData(monthData.year, monthData.month);
+            
+            return (
+              <div key={`${monthData.year}-${monthData.month}`} className="bg-gray-800 rounded-lg p-4">
+                <h2 className="text-xl font-bold text-center mb-3">{monthData.name}</h2>
+                
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {weekdays.map((day) => (
+                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map((day, index) => {
+                    let bgColor = 'bg-gray-700';
+                    let textColor = 'text-gray-400';
+                    
+                    if (day.isSpecialPurple) {
+                      bgColor = 'bg-purple-600';
+                      textColor = 'text-white';
+                    } else if (day.isSpecialRed) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                      } else {
+                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialBlue) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
+                      } else {
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialGreen) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-green-600/35'; // Same green with 35% transparency
+                      } else {
+                        bgColor = 'bg-green-600'; // Regular green for current month dates
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isCurrentMonth) {
+                      bgColor = 'bg-gray-600';
+                      textColor = 'text-white';
+                    }
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
+                      >
+                        {day.isPast && (
+                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                            😊
+                          </div>
+                        )}
+                        {day.date}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
       
       {/* May 5th Countdown */}
