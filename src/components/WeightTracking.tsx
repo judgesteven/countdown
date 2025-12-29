@@ -463,99 +463,91 @@ const WeightTracking = () => {
       return null;
     }
 
-    // Month 1 (Jan): 3 runs/week on Tue/Thu/Sat
+    // Month 1 (Jan): 3 runs/week on Mon/Wed/Fri
     if (month === 0) {
-      // Week 1 (starting Mon 2026-01-05): Tue 6k, Thu 6k, Sat 10k
+      // Week 1 (Jan 5-11): Mon 5 Jan: 6k, Wed 7 Jan: 6k, Fri 9 Jan: 10k
       if (day >= 5 && day <= 11) {
-        if (dayOfWeek === 2) return 6; // Tuesday
-        if (dayOfWeek === 4) return 6; // Thursday
-        if (dayOfWeek === 6) return 10; // Saturday
+        if (dayOfWeek === 1) return 6; // Monday
+        if (dayOfWeek === 3) return 6; // Wednesday
+        if (dayOfWeek === 5) return 10; // Friday
       }
-      // Week 2 (starting Mon 2026-01-12): Tue 6k, Thu 7k, Sat 11k
+      // Week 2 (Jan 12-18): Mon 12 Jan: 6k, Wed 14 Jan: 7k, Fri 16 Jan: 11k
       else if (day >= 12 && day <= 18) {
-        if (dayOfWeek === 2) return 6; // Tuesday
-        if (dayOfWeek === 4) return 7; // Thursday
-        if (dayOfWeek === 6) return 11; // Saturday
+        if (dayOfWeek === 1) return 6; // Monday
+        if (dayOfWeek === 3) return 7; // Wednesday
+        if (dayOfWeek === 5) return 11; // Friday
       }
-      // Week 3 (starting Mon 2026-01-19): Tue 7k, Thu 7k, Sat 12k
+      // Week 3 (Jan 19-25): Mon 19 Jan: 7k, Wed 21 Jan: 7k, Fri 23 Jan: 12k
       else if (day >= 19 && day <= 25) {
-        if (dayOfWeek === 2) return 7; // Tuesday
-        if (dayOfWeek === 4) return 7; // Thursday
-        if (dayOfWeek === 6) return 12; // Saturday
-      }
-      // Week 4 (starting Mon 2026-01-26): Tue 7k, Thu 8k, Sat 14k
-      else if (day >= 26 && day <= 31) {
-        if (dayOfWeek === 2) return 7; // Tuesday
-        if (dayOfWeek === 4) return 8; // Thursday
-        if (dayOfWeek === 6) return 14; // Saturday
-      }
-    }
-
-    // Month 2 (Feb): 4 runs/week on Mon/Wed/Fri/Sat
-    if (month === 1) {
-      // Week 5 (starting Mon 2026-02-02): Mon 7k, Wed 7k, Fri 6k, Sat 14k
-      if (day >= 2 && day <= 8) {
         if (dayOfWeek === 1) return 7; // Monday
         if (dayOfWeek === 3) return 7; // Wednesday
-        if (dayOfWeek === 5) return 6; // Friday
-        if (dayOfWeek === 6) return 14; // Saturday
+        if (dayOfWeek === 5) return 12; // Friday
       }
-      // Week 6 (starting Mon 2026-02-09): Mon 7k, Wed 8k, Fri 7k, Sat 15k
-      else if (day >= 9 && day <= 15) {
+      // Week 4 (Jan 26-Feb 1): Mon 26 Jan: 7k, Wed 28 Jan: 8k, Fri 30 Jan: 13k
+      else if (day >= 26 && day <= 31) {
         if (dayOfWeek === 1) return 7; // Monday
         if (dayOfWeek === 3) return 8; // Wednesday
-        if (dayOfWeek === 5) return 7; // Friday
-        if (dayOfWeek === 6) return 15; // Saturday
-      }
-      // Week 7 (starting Mon 2026-02-16): Mon 8k, Wed 8k, Fri 7k, Sat 16k
-      else if (day >= 16 && day <= 22) {
-        if (dayOfWeek === 1) return 8; // Monday
-        if (dayOfWeek === 3) return 8; // Wednesday
-        if (dayOfWeek === 5) return 7; // Friday
-        if (dayOfWeek === 6) return 16; // Saturday
-      }
-      // Week 8 (starting Mon 2026-02-23): Mon 8k, Wed 8k, Fri 8k, Sat 18k
-      else if (day >= 23 && day <= 29) {
-        if (dayOfWeek === 1) return 8; // Monday
-        if (dayOfWeek === 3) return 8; // Wednesday
-        if (dayOfWeek === 5) return 8; // Friday
-        if (dayOfWeek === 6) return 18; // Saturday
+        if (dayOfWeek === 5) return 13; // Friday
       }
     }
 
-    // Month 3 (Mar): 5 runs/week on Mon/Tue/Thu/Fri/Sat
-    if (month === 2) {
-      // Week 9 (starting Mon 2026-03-02): Mon 7k, Tue 8k, Thu 7k, Fri 6k, Sat 18k
+    // Month 2 (Feb): 3 runs/week on Mon/Wed/Fri
+    if (month === 1) {
+      // Week 5 (Feb 2-8): Mon 2 Feb: 7k, Wed 4 Feb: 8k, Fri 6 Feb: 14k
       if (day >= 2 && day <= 8) {
         if (dayOfWeek === 1) return 7; // Monday
-        if (dayOfWeek === 2) return 8; // Tuesday
-        if (dayOfWeek === 4) return 7; // Thursday
-        if (dayOfWeek === 5) return 6; // Friday
-        if (dayOfWeek === 6) return 18; // Saturday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 14; // Friday
       }
-      // Week 10 (starting Mon 2026-03-09): Mon 8k, Tue 8k, Thu 8k, Fri 6k, Sat 19k
+      // Week 6 (Feb 9-15): Mon 9 Feb: 8k, Wed 11 Feb: 8k, Fri 13 Feb: 15k
       else if (day >= 9 && day <= 15) {
         if (dayOfWeek === 1) return 8; // Monday
-        if (dayOfWeek === 2) return 8; // Tuesday
-        if (dayOfWeek === 4) return 8; // Thursday
-        if (dayOfWeek === 5) return 6; // Friday
-        if (dayOfWeek === 6) return 19; // Saturday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 15; // Friday
       }
-      // Week 11 (starting Mon 2026-03-16): Mon 8k, Tue 9k, Thu 8k, Fri 7k, Sat 20k
+      // Week 7 (Feb 16-22): Mon 16 Feb: 8k, Wed 18 Feb: 9k, Fri 20 Feb: 16k
       else if (day >= 16 && day <= 22) {
         if (dayOfWeek === 1) return 8; // Monday
-        if (dayOfWeek === 2) return 9; // Tuesday
-        if (dayOfWeek === 4) return 8; // Thursday
-        if (dayOfWeek === 5) return 7; // Friday
-        if (dayOfWeek === 6) return 20; // Saturday
+        if (dayOfWeek === 3) return 9; // Wednesday
+        if (dayOfWeek === 5) return 16; // Friday
       }
-      // Week 12 (starting Mon 2026-03-23): Mon 8k, Tue 9k, Thu 8k, Fri 8k, Sat 21k
+      // Week 8 (Feb 23-Mar 1): Mon 23 Feb: 8k, Wed 25 Feb: 9k, Fri 27 Feb: 17k
       else if (day >= 23 && day <= 29) {
         if (dayOfWeek === 1) return 8; // Monday
-        if (dayOfWeek === 2) return 9; // Tuesday
-        if (dayOfWeek === 4) return 8; // Thursday
-        if (dayOfWeek === 5) return 8; // Friday
-        if (dayOfWeek === 6) return 21; // Saturday
+        if (dayOfWeek === 3) return 9; // Wednesday
+        if (dayOfWeek === 5) return 17; // Friday
+      }
+    }
+
+    // Month 3 (Mar): 4 runs/week on Mon/Wed/Fri/Sat
+    if (month === 2) {
+      // Week 9 (Mar 2-8): Mon 2 Mar: 6k, Wed 4 Mar: 7k, Fri 6 Mar: 18k, Sat 7 Mar: 6k
+      if (day >= 2 && day <= 8) {
+        if (dayOfWeek === 1) return 6; // Monday
+        if (dayOfWeek === 3) return 7; // Wednesday
+        if (dayOfWeek === 5) return 18; // Friday
+        if (dayOfWeek === 6) return 6; // Saturday
+      }
+      // Week 10 (Mar 9-15): Mon 9 Mar: 7k, Wed 11 Mar: 7k, Fri 13 Mar: 19k, Sat 14 Mar: 6k
+      else if (day >= 9 && day <= 15) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 3) return 7; // Wednesday
+        if (dayOfWeek === 5) return 19; // Friday
+        if (dayOfWeek === 6) return 6; // Saturday
+      }
+      // Week 11 (Mar 16-22): Mon 16 Mar: 7k, Wed 18 Mar: 8k, Fri 20 Mar: 20k, Sat 21 Mar: 6k
+      else if (day >= 16 && day <= 22) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 20; // Friday
+        if (dayOfWeek === 6) return 6; // Saturday
+      }
+      // Week 12 (Mar 23-28): Mon 23 Mar: 7k, Wed 25 Mar: 8k, Fri 27 Mar: 21k, Sat 28 Mar: 6k
+      else if (day >= 23 && day <= 28) {
+        if (dayOfWeek === 1) return 7; // Monday
+        if (dayOfWeek === 3) return 8; // Wednesday
+        if (dayOfWeek === 5) return 21; // Friday
+        if (dayOfWeek === 6) return 6; // Saturday
       }
     }
 
