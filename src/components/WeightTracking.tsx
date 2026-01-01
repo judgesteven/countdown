@@ -74,7 +74,7 @@ const WeightTracking = () => {
   const [error, setError] = useState<string | null>(null);
 
   const targetWeight = 80;
-  const startWeight = 90;
+  const startWeight = 91.5;
 
   // Helper function to convert to KSA time
   const toKSA = (date: Date) => {
