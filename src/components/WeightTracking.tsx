@@ -301,6 +301,72 @@ const WeightTracking = () => {
     return entry ? entry.weight : null;
   };
 
+  // Helper function to get weight on the 1st of a month, or earliest weight in month if 1st has no entry
+  const getFirstOfMonthWeight = (year: number, month: number): number | null => {
+    const firstOfMonth = new Date(year, month, 1);
+    const firstWeight = getWeightForDate(firstOfMonth);
+    
+    // If there's a weight on the 1st, use it
+    if (firstWeight !== null) {
+      return firstWeight;
+    }
+    
+    // Otherwise, find the earliest weight entry in the month
+    const monthEntries = weightEntries.filter(entry => {
+      const entryDate = entry.date;
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+    });
+    
+    if (monthEntries.length === 0) {
+      return null;
+    }
+    
+    const earliest = [...monthEntries].sort((a, b) => a.date.getTime() - b.date.getTime())[0];
+    return earliest.weight;
+  };
+
+  // Helper function to get latest weight for a month
+  const getLatestWeightForMonth = (year: number, month: number): number | null => {
+    const monthEntries = weightEntries.filter(entry => {
+      const entryDate = entry.date;
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+    });
+    
+    if (monthEntries.length === 0) {
+      return null;
+    }
+    
+    const latest = [...monthEntries].sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+    return latest.weight;
+  };
+
+  // Calculate monthly weight progress
+  const getMonthlyWeightProgress = (year: number, month: number) => {
+    // First try to get weight on the 1st, otherwise get earliest weight in month
+    const firstWeight = getFirstOfMonthWeight(year, month);
+    
+    // Only show progress bar if there's at least one weight entry in the month
+    if (firstWeight === null) {
+      return null;
+    }
+    
+    const targetWeight = firstWeight - 2;
+    // Get latest weight in the month, or use firstWeight if no entries in month yet
+    const latestWeight = getLatestWeightForMonth(year, month) ?? firstWeight;
+    
+    const totalWeightToLose = 2; // Always 2KG
+    const weightLost = firstWeight - latestWeight;
+    const progress = totalWeightToLose > 0 ? (weightLost / totalWeightToLose) * 100 : 0;
+    
+    return {
+      startWeight: firstWeight,
+      targetWeight: targetWeight,
+      currentWeight: latestWeight,
+      progress: Math.max(0, Math.min(100, progress)),
+      remainingWeight: latestWeight - targetWeight
+    };
+  };
+
   const handleAddActivity = async () => {
     try {
       const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, toKSA(new Date())));
@@ -1033,6 +1099,40 @@ const WeightTracking = () => {
                     }
                   })}
                 </div>
+                
+                {/* Monthly Weight Progress Bar */}
+                {(() => {
+                  const monthlyProgress = getMonthlyWeightProgress(monthData.year, monthData.month);
+                  if (monthlyProgress === null) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div className="w-full mt-6 pt-6 border-t border-gray-700">
+                      <div className="flex items-center gap-4 mb-2">
+                        <span className="text-sm text-gray-400 w-20 text-right">{monthlyProgress.startWeight.toFixed(1)}KG</span>
+                        <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
+                          <div
+                            className="bg-green-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${monthlyProgress.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-gray-400 w-20">{monthlyProgress.targetWeight.toFixed(1)}KG</span>
+                      </div>
+                      <div className="text-center text-sm text-gray-300">
+                        Current: {monthlyProgress.currentWeight.toFixed(1)} KG
+                        {monthlyProgress.remainingWeight > 0 && (
+                          <span className="ml-4">
+                            ({monthlyProgress.remainingWeight.toFixed(1)} KG to target - {monthlyProgress.progress.toFixed(1)}%)
+                          </span>
+                        )}
+                        {monthlyProgress.remainingWeight <= 0 && (
+                          <span className="ml-4 text-green-400">Goal Achieved! 🎉</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
