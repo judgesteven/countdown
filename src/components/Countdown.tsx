@@ -57,10 +57,10 @@ const Countdown = () => {
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: Friday 28th November, 2025 at 20:00 KSA time
-  const startTime = new Date('2025-11-28T20:00:00+03:00'); // Friday 28th November at 20:00 KSA time
-  // Fixed end date: Thursday 18th December, 2025 at 23:50 KSA time
-  const endTime = new Date('2025-12-18T23:50:00+03:00'); // Thursday 18th December at 23:50 KSA time
+  // Fixed start date: Friday 16th June, 2026 at 08:00 KSA time
+  const startTime = new Date('2026-06-16T08:00:00+03:00'); // Friday 16th June at 08:00 KSA time
+  // Fixed end date: Friday 30th January, 2026 at 02:00 KSA time
+  const endTime = new Date('2026-01-30T02:00:00+03:00'); // Friday 30th January at 02:00 KSA time
 
   // Helper function to get month data
   const getMonthData = (year: number, month: number) => {

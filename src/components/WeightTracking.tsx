@@ -1025,11 +1025,6 @@ const WeightTracking = () => {
                           className={`${bgColor} ${todayBg} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${borderClass} group`}
                         >
                           <span className="font-semibold text-sm">{day.date}</span>
-                          {day.targetDistance && (
-                            <div className="text-xs mt-0.5 text-orange-300 font-semibold bg-orange-900/30 px-1 py-0.5 rounded">
-                              Plan: {day.targetDistance}k
-                            </div>
-                          )}
                           {day.activity && (
                             <>
                               <div className="text-sm mt-1 font-bold text-white">
@@ -1045,12 +1040,6 @@ const WeightTracking = () => {
                                     <span className="text-gray-400">Distance:</span>
                                     <span className="text-white font-semibold">{day.activity.distance.toFixed(1)} km</span>
                                   </div>
-                                  {day.targetDistance && (
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-400">Plan:</span>
-                                      <span className="text-orange-300 font-semibold">{day.targetDistance} km</span>
-                                    </div>
-                                  )}
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Time:</span>
                                     <span className="text-white font-semibold">{Math.floor(day.activity.time)} min</span>
