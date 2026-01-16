@@ -57,8 +57,8 @@ const Countdown = () => {
     return nextHour.getTime() - now.getTime();
   };
 
-  // Fixed start date: Friday 16th June, 2026 at 08:00 KSA time
-  const startTime = new Date('2026-06-16T08:00:00+03:00'); // Friday 16th June at 08:00 KSA time
+  // Fixed start date: Friday 16th January, 2026 at 08:00 KSA time
+  const startTime = new Date('2026-01-16T08:00:00+03:00'); // Friday 16th January at 08:00 KSA time
   // Fixed end date: Friday 30th January, 2026 at 02:00 KSA time
   const endTime = new Date('2026-01-30T02:00:00+03:00'); // Friday 30th January at 02:00 KSA time
 
@@ -170,10 +170,19 @@ const Countdown = () => {
       const now = toKSA(new Date());
       const difference = endTime.getTime() - now.getTime();
       
-      if (difference > 0) {
+      // If we're before the start time, progress should be 0
+      if (now.getTime() < startTime.getTime()) {
+        setProgress(0);
+        const timeUntilStart = startTime.getTime() - now.getTime();
+        const days = Math.floor(timeUntilStart / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft({ days, hours, minutes });
+      } else if (difference > 0) {
+        // We're between start and end time - calculate progress
         const hoursElapsed = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         const currentProgress = (hoursElapsed / totalHours) * 100;
-        setProgress(Math.min(currentProgress, 100));
+        setProgress(Math.max(0, Math.min(currentProgress, 100)));
 
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -190,6 +199,7 @@ const Countdown = () => {
           })
         );
       } else {
+        // We're past the end time
         setProgress(100);
         setTimeLeft({ days: 0, hours: 0, minutes: 0 });
       }
