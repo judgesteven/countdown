@@ -820,7 +820,7 @@ const WeightTracking = () => {
         {/* Distance Progress Bar */}
         <div className="w-full mt-6">
           <div className="flex items-center gap-4 mb-2">
-            <span className="text-sm text-gray-400 w-20 text-right">0KM</span>
+            <span className="text-sm text-gray-400 w-20 text-right">{Math.round(totalSummary.totalDistance)}KM</span>
             <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
               <div
                 className="bg-blue-600 h-6 rounded-full transition-all duration-1000 ease-out"
