@@ -289,6 +289,25 @@ const WeightTracking = () => {
     return NaN;
   };
 
+  // Helper function to format minutes to hh:mm:ss
+  const formatMinutesToTime = (minutes: number): string => {
+    if (isNaN(minutes) || minutes < 0) return 'N/A';
+    const totalSeconds = Math.round(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format minutes to mm:ss
+  const formatMinutesToPace = (minutes: number): string => {
+    if (isNaN(minutes) || minutes < 0) return 'N/A';
+    const totalSeconds = Math.round(minutes * 60);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const persistData = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
     saveToLocal(activities, weights);
     await saveToRemote(activities, weights);
@@ -1081,11 +1100,11 @@ const WeightTracking = () => {
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Time:</span>
-                                    <span className="text-white font-semibold">{Math.floor(day.activity.time)} min</span>
+                                    <span className="text-white font-semibold">{formatMinutesToTime(day.activity.time)}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Pace:</span>
-                                    <span className="text-white font-semibold">{day.activity.pace > 0 ? day.activity.pace.toFixed(2) : 'N/A'} min/km</span>
+                                    <span className="text-white font-semibold">{day.activity.pace > 0 ? `${formatMinutesToPace(day.activity.pace)} min/km` : 'N/A'}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">Avg HR:</span>
@@ -1097,7 +1116,7 @@ const WeightTracking = () => {
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-gray-400">VO2 Max:</span>
-                                    <span className="text-white font-semibold">{day.activity.vo2Max > 0 ? day.activity.vo2Max.toFixed(1) : 'N/A'}</span>
+                                    <span className="text-white font-semibold">{day.activity.vo2Max > 0 ? Math.round(day.activity.vo2Max) : 'N/A'}</span>
                                   </div>
                                 </div>
                                 {/* Arrow pointing down */}
