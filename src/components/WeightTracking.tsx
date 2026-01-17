@@ -250,6 +250,45 @@ const WeightTracking = () => {
            date1.getDate() === date2.getDate();
   };
 
+  // Helper function to parse hh:mm:ss format to minutes
+  const parseTimeToMinutes = (timeString: string): number => {
+    if (!timeString || timeString.trim() === '') return NaN;
+    
+    const parts = timeString.split(':');
+    if (parts.length === 3) {
+      // hh:mm:ss format
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      const seconds = parseInt(parts[2], 10);
+      if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+        return hours * 60 + minutes + seconds / 60;
+      }
+    } else if (parts.length === 2) {
+      // mm:ss format (fallback)
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parseInt(parts[1], 10);
+      if (!isNaN(minutes) && !isNaN(seconds)) {
+        return minutes + seconds / 60;
+      }
+    }
+    return NaN;
+  };
+
+  // Helper function to parse mm:ss format to minutes
+  const parsePaceToMinutes = (paceString: string): number => {
+    if (!paceString || paceString.trim() === '') return NaN;
+    
+    const parts = paceString.split(':');
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parseInt(parts[1], 10);
+      if (!isNaN(minutes) && !isNaN(seconds)) {
+        return minutes + seconds / 60;
+      }
+    }
+    return NaN;
+  };
+
   const persistData = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
     saveToLocal(activities, weights);
     await saveToRemote(activities, weights);
@@ -373,11 +412,11 @@ const WeightTracking = () => {
       const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
 
       const rawDistance = parseFloat(newActivity.distance);
-      const rawTime = parseFloat(newActivity.time);
-      const rawPace = parseFloat(newActivity.pace);
+      const rawTime = parseTimeToMinutes(newActivity.time); // Parse hh:mm:ss format
+      const rawPace = parsePaceToMinutes(newActivity.pace); // Parse mm:ss format
       const rawAvgHeartRate = parseFloat(newActivity.avgHeartRate);
       const rawMaxHeartRate = parseFloat(newActivity.maxHeartRate);
-      const rawVo2Max = parseFloat(newActivity.vo2Max);
+      const rawVo2Max = parseInt(newActivity.vo2Max, 10); // Integer only, no decimals
 
       // If updating an existing entry, allow blank fields to keep previous values.
       const distance = !isNaN(rawDistance) ? rawDistance : existingEntry?.distance ?? NaN;
@@ -807,29 +846,29 @@ const WeightTracking = () => {
               value={newActivity.distance}
               onChange={(e) => setNewActivity({ ...newActivity, distance: e.target.value })}
               placeholder="0.0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Time (minutes)</label>
+            <label className="block text-sm text-gray-400 mb-1">Time (hh:mm:ss)</label>
             <input
-              type="number"
-              step="0.1"
+              type="text"
               value={newActivity.time}
               onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
-              placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="00:00:00"
+              pattern="[0-9]{1,2}:[0-5][0-9]:[0-5][0-9]"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Pace (min/km)</label>
+            <label className="block text-sm text-gray-400 mb-1">Pace (mm:ss)</label>
             <input
-              type="number"
-              step="0.1"
+              type="text"
               value={newActivity.pace}
               onChange={(e) => setNewActivity({ ...newActivity, pace: e.target.value })}
-              placeholder="Auto"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="00:00"
+              pattern="[0-9]{1,2}:[0-5][0-9]"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div>
@@ -840,7 +879,7 @@ const WeightTracking = () => {
               value={newActivity.avgHeartRate}
               onChange={(e) => setNewActivity({ ...newActivity, avgHeartRate: e.target.value })}
               placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div>
@@ -851,18 +890,18 @@ const WeightTracking = () => {
               value={newActivity.maxHeartRate}
               onChange={(e) => setNewActivity({ ...newActivity, maxHeartRate: e.target.value })}
               placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           <div>
             <label className="block text-sm text-gray-400 mb-1">VO2 Max</label>
             <input
               type="number"
-              step="0.1"
+              step="1"
               value={newActivity.vo2Max}
               onChange={(e) => setNewActivity({ ...newActivity, vo2Max: e.target.value })}
-              placeholder="0.0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="0"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
         </div>
