@@ -821,7 +821,7 @@ const WeightTracking = () => {
           <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
             <div className="text-sm text-gray-400 mb-2">VO2 Max</div>
             <div className="text-4xl font-bold text-cyan-400">
-              {totalSummary.avgVo2Max > 0 ? totalSummary.avgVo2Max.toFixed(1) : '0.0'}
+              {totalSummary.avgVo2Max > 0 ? Math.round(totalSummary.avgVo2Max) : '0'}
             </div>
           </div>
           <div className="bg-gray-900 rounded-lg p-4 text-center border border-gray-700">
