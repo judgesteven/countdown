@@ -9,6 +9,7 @@ interface DayData {
   isSpecialBlue?: boolean;
   isSpecialRed?: boolean;
   isSpecialPurple?: boolean;
+  isSpecialYellow?: boolean;
   isOverlapping?: boolean;
   dateObj: Date;
 }
@@ -100,8 +101,13 @@ const Countdown = () => {
       const isSpecialBlue = 
         (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)) || // Sep 21 - Sep 28
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 1 && currentDate.getDate() === 22) || // Feb 22, 2026
+        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 14) || // Mar 14, 2026
         (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 24)) || // Mar 15 - Mar 24
         (currentDate >= new Date(2026, 4, 25) && currentDate <= new Date(2026, 5, 1)); // May 25 - Jun 1
+      
+      // Check if date is in special yellow range
+      const isSpecialYellow = 
+        (currentDate >= new Date(2026, 0, 27) && currentDate <= new Date(2026, 0, 29)); // Jan 27 - Jan 29, 2026
       
       // Check if date is in special red ranges
       const isSpecialRed = 
@@ -114,7 +120,7 @@ const Countdown = () => {
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 4 && currentDate.getDate() === 5); // May 5, 2026
       
       // Check if this date appears in multiple months (overlapping)
-      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple);
+      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple || isSpecialYellow);
       
       days.push({
         date: currentDate.getDate(),
@@ -125,6 +131,7 @@ const Countdown = () => {
         isSpecialBlue,
         isSpecialRed,
         isSpecialPurple,
+        isSpecialYellow,
         isOverlapping,
         dateObj: new Date(currentDate)
       });
@@ -324,6 +331,13 @@ const Countdown = () => {
                     if (day.isSpecialPurple) {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
+                    } else if (day.isSpecialYellow) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-yellow-600/35'; // Same yellow with 35% transparency
+                      } else {
+                        bgColor = 'bg-yellow-600'; // Regular yellow for current month dates
+                      }
+                      textColor = 'text-white';
                     } else if (day.isSpecialRed) {
                       if (day.isOverlapping) {
                         bgColor = 'bg-red-600/35'; // Same red with 35% transparency
@@ -396,6 +410,13 @@ const Countdown = () => {
                     
                     if (day.isSpecialPurple) {
                       bgColor = 'bg-purple-600';
+                      textColor = 'text-white';
+                    } else if (day.isSpecialYellow) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-yellow-600/35'; // Same yellow with 35% transparency
+                      } else {
+                        bgColor = 'bg-yellow-600'; // Regular yellow for current month dates
+                      }
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
                       if (day.isOverlapping) {
