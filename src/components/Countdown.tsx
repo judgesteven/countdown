@@ -98,7 +98,8 @@ const Countdown = () => {
       
       // Check if date is in special blue range
       const isSpecialBlue = 
-        (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)); // Sep 21 - Sep 28
+        (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)) || // Sep 21 - Sep 28
+        (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 24)); // Mar 15 - Mar 24
       
       // Check if date is in special red ranges
       const isSpecialRed = 
