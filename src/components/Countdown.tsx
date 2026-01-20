@@ -102,8 +102,8 @@ const Countdown = () => {
         (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)) || // Sep 21 - Sep 28
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 1 && currentDate.getDate() === 22) || // Feb 22, 2026
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 14) || // Mar 14, 2026
-        (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 24)) || // Mar 15 - Mar 24
-        (currentDate >= new Date(2026, 4, 25) && currentDate <= new Date(2026, 5, 1)); // May 25 - Jun 1
+        (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 23)) || // Mar 15 - Mar 23
+        (currentDate >= new Date(2026, 4, 24) && currentDate <= new Date(2026, 4, 30)); // May 24 - May 30
       
       // Check if date is in special yellow range
       const isSpecialYellow = 
