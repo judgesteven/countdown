@@ -107,6 +107,7 @@ const Countdown = () => {
       
       // Check if date is in special yellow range
       const isSpecialYellow = 
+        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 26) || // Jan 26, 2026
         (currentDate >= new Date(2026, 0, 27) && currentDate <= new Date(2026, 0, 29)); // Jan 27 - Jan 29, 2026
       
       // Check if date is in special red ranges
