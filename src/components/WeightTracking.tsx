@@ -463,16 +463,11 @@ const WeightTracking = () => {
         alert('Please enter a valid time');
         return;
       }
-
-      const now = toKSA(new Date());
-      // Normalize to midnight KSA time to avoid timezone issues
-      const normalizedDate = normalizeToKSADate(now);
-      normalizedDate.setHours(0, 0, 0, 0);
       
       // Check if there's already an entry for today's date
       let updatedEntries: ActivityEntry[];
       const newEntry: ActivityEntry = {
-        date: normalizedDate,
+        date: normalizedNow,
         distance: distance,
         time: time,
         pace: isNaN(pace) ? time / distance : pace,
