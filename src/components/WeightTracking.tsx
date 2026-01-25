@@ -92,17 +92,14 @@ const WeightTracking = () => {
   const saveToLocal = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
     if (typeof window === 'undefined') return;
     try {
-      // Filter to only include 2026 data (starting from Jan 1, 2026)
-      const startDate = new Date(2026, 0, 1);
-      startDate.setHours(0, 0, 0, 0);
+      // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to KSA
+      const startDate = normalizeToKSADate(new Date(2026, 0, 1));
       const filteredActivities = activities.filter(entry => {
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0, 0, 0, 0);
+        const entryDate = normalizeToKSADate(entry.date);
         return entryDate >= startDate;
       });
       const filteredWeights = weights.filter(entry => {
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0, 0, 0, 0);
+        const entryDate = normalizeToKSADate(entry.date);
         return entryDate >= startDate;
       });
       
@@ -243,11 +240,19 @@ const WeightTracking = () => {
     }
   }, [loadFromLocal, loadFromRemote]);
 
-  // Helper function to compare dates (year, month, day only)
+  // Helper function to normalize date to KSA timezone (date only, no time)
+  const normalizeToKSADate = (date: Date): Date => {
+    const ksaDate = toKSA(date);
+    return new Date(ksaDate.getFullYear(), ksaDate.getMonth(), ksaDate.getDate());
+  };
+
+  // Helper function to compare dates (year, month, day only) - normalized to KSA
   const isSameDate = (date1: Date, date2: Date): boolean => {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
+    const normalized1 = normalizeToKSADate(date1);
+    const normalized2 = normalizeToKSADate(date2);
+    return normalized1.getFullYear() === normalized2.getFullYear() &&
+           normalized1.getMonth() === normalized2.getMonth() &&
+           normalized1.getDate() === normalized2.getDate();
   };
 
   // Helper function to parse hh:mm:ss format to minutes
@@ -427,7 +432,10 @@ const WeightTracking = () => {
 
   const handleAddActivity = async () => {
     try {
-      const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, toKSA(new Date())));
+      const now = toKSA(new Date());
+      const normalizedNow = normalizeToKSADate(now);
+      normalizedNow.setHours(0, 0, 0, 0);
+      const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, normalizedNow));
       const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
 
       const rawDistance = parseFloat(newActivity.distance);
@@ -457,11 +465,14 @@ const WeightTracking = () => {
       }
 
       const now = toKSA(new Date());
+      // Normalize to midnight KSA time to avoid timezone issues
+      const normalizedDate = normalizeToKSADate(now);
+      normalizedDate.setHours(0, 0, 0, 0);
       
       // Check if there's already an entry for today's date
       let updatedEntries: ActivityEntry[];
       const newEntry: ActivityEntry = {
-        date: now,
+        date: normalizedDate,
         distance: distance,
         time: time,
         pace: isNaN(pace) ? time / distance : pace,
