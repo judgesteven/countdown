@@ -118,17 +118,14 @@ const WeightTracking = () => {
       ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
     };
     
-    // Filter to only include 2026 data (starting from Jan 1, 2026)
-    const startDate = new Date(2026, 0, 1);
-    startDate.setHours(0, 0, 0, 0);
+    // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to KSA
+    const startDate = normalizeToKSADate(new Date(2026, 0, 1));
     const filteredActivities = activities.filter(entry => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
+      const entryDate = normalizeToKSADate(entry.date);
       return entryDate >= startDate;
     });
     const filteredWeights = weights.filter(entry => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
+      const entryDate = normalizeToKSADate(entry.date);
       return entryDate >= startDate;
     });
     
@@ -240,36 +237,6 @@ const WeightTracking = () => {
     }
   }, [loadFromLocal, loadFromRemote]);
 
-  // Seed initial data after activities are loaded
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Define seed function inline to avoid dependency issues
-    const seedData = async () => {
-      const seedDate = normalizeToKSADate(new Date(2026, 0, 24));
-      seedDate.setHours(0, 0, 0, 0);
-      
-      const existingEntry = activityEntries.find(entry => isSameDate(entry.date, seedDate));
-      
-      if (!existingEntry) {
-        const seedEntry: ActivityEntry = {
-          date: seedDate,
-          distance: 6.1,
-          time: parseTimeToMinutes('00:41:59'),
-          pace: parsePaceToMinutes('6:52'),
-          avgHeartRate: 170,
-          maxHeartRate: 186,
-          vo2Max: 37
-        };
-        
-        const updatedActivities = [...activityEntries, seedEntry];
-        setActivityEntries(updatedActivities);
-        await persistData(updatedActivities, weightEntries);
-      }
-    };
-    
-    seedData().catch(err => console.error('Error seeding data:', err));
-  }, [mounted, activityEntries, weightEntries, persistData]);
 
   // Helper function to normalize date to KSA timezone (date only, no time)
   const normalizeToKSADate = (date: Date): Date => {
