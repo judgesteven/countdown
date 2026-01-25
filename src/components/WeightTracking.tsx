@@ -179,10 +179,7 @@ const WeightTracking = () => {
     setWeightEntries(weights);
     updateCurrentWeightFromEntries(weights);
     saveToLocal(activities, weights);
-    
-    // Seed initial data for Jan 24, 2026 if it doesn't exist
-    seedInitialData(activities, weights).catch(err => console.error('Error seeding data:', err));
-  }, [saveToLocal, updateCurrentWeightFromEntries, seedInitialData]);
+  }, [saveToLocal, updateCurrentWeightFromEntries]);
 
   const loadFromLocal = useCallback(() => {
     if (typeof window === 'undefined') return { activities: [], weights: [] };
@@ -216,15 +213,12 @@ const WeightTracking = () => {
         setWeightEntries(weights);
         updateCurrentWeightFromEntries(weights);
       }
-      
-      // Seed initial data for Jan 24, 2026 if it doesn't exist
-      seedInitialData(activities, weights).catch(err => console.error('Error seeding data:', err));
     } catch (error) {
       console.error('Error loading from localStorage:', error);
       setError('Error loading saved data. Your data is safe in your browser.');
     }
     return { activities, weights };
-  }, [updateCurrentWeightFromEntries, seedInitialData]);
+  }, [updateCurrentWeightFromEntries]);
 
   useEffect(() => {
     try {
@@ -246,11 +240,43 @@ const WeightTracking = () => {
     }
   }, [loadFromLocal, loadFromRemote]);
 
+  // Seed initial data after activities are loaded
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Define seed function inline to avoid dependency issues
+    const seedData = async () => {
+      const seedDate = normalizeToKSADate(new Date(2026, 0, 24));
+      seedDate.setHours(0, 0, 0, 0);
+      
+      const existingEntry = activityEntries.find(entry => isSameDate(entry.date, seedDate));
+      
+      if (!existingEntry) {
+        const seedEntry: ActivityEntry = {
+          date: seedDate,
+          distance: 6.1,
+          time: parseTimeToMinutes('00:41:59'),
+          pace: parsePaceToMinutes('6:52'),
+          avgHeartRate: 170,
+          maxHeartRate: 186,
+          vo2Max: 37
+        };
+        
+        const updatedActivities = [...activityEntries, seedEntry];
+        setActivityEntries(updatedActivities);
+        await persistData(updatedActivities, weightEntries);
+      }
+    };
+    
+    seedData().catch(err => console.error('Error seeding data:', err));
+  }, [mounted, activityEntries, weightEntries, persistData]);
+
   // Helper function to normalize date to KSA timezone (date only, no time)
   const normalizeToKSADate = (date: Date): Date => {
     const ksaDate = toKSA(date);
     return new Date(ksaDate.getFullYear(), ksaDate.getMonth(), ksaDate.getDate());
   };
+
 
   // Helper function to compare dates (year, month, day only) - normalized to KSA
   const isSameDate = (date1: Date, date2: Date): boolean => {
@@ -324,32 +350,6 @@ const WeightTracking = () => {
     saveToLocal(activities, weights);
     await saveToRemote(activities, weights);
   }, [saveToLocal, saveToRemote]);
-
-  // Seed initial data for Jan 24, 2026
-  const seedInitialData = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
-    const seedDate = normalizeToKSADate(new Date(2026, 0, 24));
-    seedDate.setHours(0, 0, 0, 0);
-    
-    // Check if Jan 24, 2026 entry already exists
-    const existingEntry = activities.find(entry => isSameDate(entry.date, seedDate));
-    
-    if (!existingEntry) {
-      // Create seed entry for Jan 24, 2026
-      const seedEntry: ActivityEntry = {
-        date: seedDate,
-        distance: 6.1,
-        time: parseTimeToMinutes('00:41:59'), // 41 minutes 59 seconds = 41.983 minutes
-        pace: parsePaceToMinutes('6:52'), // 6 minutes 52 seconds = 6.867 minutes
-        avgHeartRate: 170,
-        maxHeartRate: 186,
-        vo2Max: 37
-      };
-      
-      const updatedActivities = [...activities, seedEntry];
-      setActivityEntries(updatedActivities);
-      await persistData(updatedActivities, weights);
-    }
-  }, [persistData]);
 
   const handleAddWeight = async () => {
     try {
