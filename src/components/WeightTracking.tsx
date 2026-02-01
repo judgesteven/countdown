@@ -72,6 +72,7 @@ const WeightTracking = () => {
   });
   const [newWeight, setNewWeight] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const targetWeight = 80;
   const startWeight = 91.5;
@@ -401,6 +402,84 @@ const WeightTracking = () => {
     
     const latest = [...monthEntries].sort((a, b) => b.date.getTime() - a.date.getTime())[0];
     return latest.weight;
+  };
+
+  // Helper function to get first weight recorded in a month
+  const getFirstWeightInMonth = (year: number, month: number): number | null => {
+    const monthEntries = weightEntries.filter(entry => {
+      const entryDate = entry.date;
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+    });
+    
+    if (monthEntries.length === 0) {
+      return null;
+    }
+    
+    const first = [...monthEntries].sort((a, b) => a.date.getTime() - b.date.getTime())[0];
+    return first.weight;
+  };
+
+  // Helper function to check if a month has passed
+  const isMonthPast = (year: number, month: number): boolean => {
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    
+    if (year < todayYear) return true;
+    if (year === todayYear && month < todayMonth) return true;
+    return false;
+  };
+
+  // Helper function to get month key
+  const getMonthKey = (year: number, month: number): string => {
+    return `${year}-${month}`;
+  };
+
+  // Toggle month expansion
+  const toggleMonth = (year: number, month: number) => {
+    const key = getMonthKey(year, month);
+    setExpandedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if month is expanded
+  const isMonthExpanded = (year: number, month: number): boolean => {
+    return expandedMonths.has(getMonthKey(year, month));
+  };
+
+  // Define calendar months (moved here for use in toggleAllMonths)
+  const calendarMonths = [
+    { name: 'January 2026', year: 2026, month: 0 },
+    { name: 'February 2026', year: 2026, month: 1 },
+    { name: 'March 2026', year: 2026, month: 2 },
+    { name: 'April 2026', year: 2026, month: 3 },
+    { name: 'May 2026', year: 2026, month: 4 },
+    { name: 'June 2026', year: 2026, month: 5 },
+    { name: 'July 2026', year: 2026, month: 6 },
+    { name: 'August 2026', year: 2026, month: 7 },
+    { name: 'September 2026', year: 2026, month: 8 },
+    { name: 'October 2026', year: 2026, month: 9 },
+    { name: 'November 2026', year: 2026, month: 10 },
+    { name: 'December 2026', year: 2026, month: 11 }
+  ];
+
+  // Expand/collapse all months
+  const toggleAllMonths = () => {
+    if (expandedMonths.size === calendarMonths.length) {
+      // All expanded, collapse all
+      setExpandedMonths(new Set());
+    } else {
+      // Expand all
+      const allKeys = calendarMonths.map(m => getMonthKey(m.year, m.month));
+      setExpandedMonths(new Set(allKeys));
+    }
   };
 
   // Calculate monthly weight progress
@@ -784,20 +863,6 @@ const WeightTracking = () => {
   }
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const calendarMonths = [
-    { name: 'January 2026', year: 2026, month: 0 },
-    { name: 'February 2026', year: 2026, month: 1 },
-    { name: 'March 2026', year: 2026, month: 2 },
-    { name: 'April 2026', year: 2026, month: 3 },
-    { name: 'May 2026', year: 2026, month: 4 },
-    { name: 'June 2026', year: 2026, month: 5 },
-    { name: 'July 2026', year: 2026, month: 6 },
-    { name: 'August 2026', year: 2026, month: 7 },
-    { name: 'September 2026', year: 2026, month: 8 },
-    { name: 'October 2026', year: 2026, month: 9 },
-    { name: 'November 2026', year: 2026, month: 10 },
-    { name: 'December 2026', year: 2026, month: 11 }
-  ];
 
 
 
@@ -995,32 +1060,126 @@ const WeightTracking = () => {
 
       {/* Calendar View - 1 month per row */}
       <div className="w-full max-w-6xl mt-8">
+        {/* Global Expand/Collapse All Button */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={toggleAllMonths}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+            title={expandedMonths.size === calendarMonths.length ? "Collapse All" : "Expand All"}
+          >
+            {expandedMonths.size === calendarMonths.length ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+                Collapse All
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
+
         {/* One month per row */}
         {calendarMonths.map((monthData) => {
           const monthDays = getMonthData(monthData.year, monthData.month);
           const monthlySummary = getMonthlySummary(monthData.year, monthData.month);
+          const monthPast = isMonthPast(monthData.year, monthData.month);
+          const isExpanded = isMonthExpanded(monthData.year, monthData.month);
+          const shouldShowCondensed = monthPast && !isExpanded;
+          
+          // Get start and end weights for the month
+          const startWeight = getFirstWeightInMonth(monthData.year, monthData.month);
+          const endWeight = getLatestWeightForMonth(monthData.year, monthData.month);
           
           return (
             <div key={`${monthData.year}-${monthData.month}`} className="mb-8">
               <div className="bg-gray-800 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold">{monthData.name}</h2>
-                  {/* Monthly Summary */}
-                  <div className="flex gap-6 text-sm">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-blue-400">{monthlySummary.totalDistance.toFixed(1)} km</div>
-                      <div className="text-xs text-gray-400">Distance</div>
+                {shouldShowCondensed ? (
+                  /* Condensed View */
+                  <div 
+                    onClick={() => toggleMonth(monthData.year, monthData.month)}
+                    className="cursor-pointer hover:bg-gray-700/50 transition-colors rounded-lg p-3"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-xl font-bold">{monthData.name}</h2>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-400">{monthlySummary.totalRuns}</div>
-                      <div className="text-xs text-gray-400">Runs</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-400">{Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m</div>
-                      <div className="text-xs text-gray-400">Time</div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Start Weight</div>
+                        <div className="text-base font-bold text-yellow-400">
+                          {startWeight !== null ? `${startWeight.toFixed(1)} kg` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">End Weight</div>
+                        <div className="text-base font-bold text-yellow-400">
+                          {endWeight !== null ? `${endWeight.toFixed(1)} kg` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Distance</div>
+                        <div className="text-base font-bold text-blue-400">{monthlySummary.totalDistance.toFixed(1)} km</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Runs</div>
+                        <div className="text-base font-bold text-green-400">{monthlySummary.totalRuns}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Time</div>
+                        <div className="text-base font-bold text-purple-400">
+                          {Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* Full View */
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold">{monthData.name}</h2>
+                      <div className="flex items-center gap-4">
+                        {/* Monthly Summary */}
+                        <div className="flex gap-6 text-sm">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-400">{monthlySummary.totalDistance.toFixed(1)} km</div>
+                            <div className="text-xs text-gray-400">Distance</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-green-400">{monthlySummary.totalRuns}</div>
+                            <div className="text-xs text-gray-400">Runs</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-purple-400">{Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m</div>
+                            <div className="text-xs text-gray-400">Time</div>
+                          </div>
+                        </div>
+                        {/* Expand/Collapse Icon */}
+                        <button
+                          onClick={() => toggleMonth(monthData.year, monthData.month)}
+                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          {isExpanded ? (
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                 
                 {/* Weekday headers */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
@@ -1186,6 +1345,8 @@ const WeightTracking = () => {
                     </div>
                   );
                 })()}
+                  </>
+                )}
               </div>
             </div>
           );
