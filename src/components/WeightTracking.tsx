@@ -71,6 +71,11 @@ const WeightTracking = () => {
     vo2Max: ''
   });
   const [newWeight, setNewWeight] = useState<string>('');
+  const [weightEntryDate, setWeightEntryDate] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    const ksa = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+    return `${ksa.getFullYear()}-${String(ksa.getMonth() + 1).padStart(2, '0')}-${String(ksa.getDate()).padStart(2, '0')}`;
+  });
   const [error, setError] = useState<string | null>(null);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
@@ -238,11 +243,30 @@ const WeightTracking = () => {
     }
   }, [loadFromLocal, loadFromRemote]);
 
+  useEffect(() => {
+    if (mounted && !weightEntryDate) {
+      setWeightEntryDate(getTodayDateStringKSA());
+    }
+  }, [mounted, weightEntryDate]);
+
 
   // Helper function to normalize date to KSA timezone (date only, no time)
   const normalizeToKSADate = (date: Date): Date => {
     const ksaDate = toKSA(date);
     return new Date(ksaDate.getFullYear(), ksaDate.getMonth(), ksaDate.getDate());
+  };
+
+  // Get today's date string in YYYY-MM-DD (KSA) for the weight entry date picker
+  const getTodayDateStringKSA = (): string => {
+    const ksa = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+    return `${ksa.getFullYear()}-${String(ksa.getMonth() + 1).padStart(2, '0')}-${String(ksa.getDate()).padStart(2, '0')}`;
+  };
+
+  // Parse YYYY-MM-DD to Date (start of that day); empty string = today in KSA
+  const getWeightEntryDate = (dateStr: string): Date => {
+    if (!dateStr) return normalizeToKSADate(new Date());
+    const d = new Date(dateStr + 'T12:00:00.000Z'); // noon UTC so calendar day is correct in KSA
+    return normalizeToKSADate(d);
   };
 
 
@@ -327,35 +351,40 @@ const WeightTracking = () => {
         return;
       }
 
-      const now = toKSA(new Date());
-      
-      // Check if there's already an entry for today's date
-      const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, now));
-      
+      const selectedDate = getWeightEntryDate(weightEntryDate || getTodayDateStringKSA());
+
+      const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, selectedDate));
+
       let updatedEntries: WeightEntry[];
       if (existingEntryIndex >= 0) {
-        // Update existing entry for today
         updatedEntries = [...weightEntries];
         updatedEntries[existingEntryIndex] = {
-          date: now,
+          date: selectedDate,
           weight: weight
         };
       } else {
-        // Add new entry
-        const newEntry: WeightEntry = {
-          date: now,
+        updatedEntries = [...weightEntries, {
+          date: selectedDate,
           weight: weight
-        };
-        updatedEntries = [...weightEntries, newEntry];
+        }];
       }
-      
+
       setWeightEntries(updatedEntries);
-      setCurrentWeight(weight);
+      updateCurrentWeightFromEntries(updatedEntries);
       setNewWeight('');
       await persistData(activityEntries, updatedEntries);
     } catch (error) {
       console.error('Error adding weight:', error);
       alert('An error occurred. Please try again.');
+    }
+  };
+
+  const handleWeightEntryDateChange = (dateStr: string) => {
+    setWeightEntryDate(dateStr);
+    if (dateStr) {
+      const d = getWeightEntryDate(dateStr);
+      const existing = weightEntries.find(e => isSameDate(e.date, d));
+      setNewWeight(existing != null ? String(existing.weight) : '');
     }
   };
 
@@ -1033,27 +1062,46 @@ const WeightTracking = () => {
             </div>
           </div>
 
-          {/* Add Weight Input */}
-          <div className="flex gap-4">
-            <input
-              type="number"
-              step="0.1"
-              value={newWeight}
-              onChange={(e) => setNewWeight(e.target.value)}
-              placeholder="Enter weight (KG)"
-              className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-lg"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddWeight();
-                }
-              }}
-            />
-            <button
-              onClick={handleAddWeight}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Add Weight
-            </button>
+          {/* Add / Amend Weight */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="min-w-[140px]">
+                <label className="block text-sm text-gray-400 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={weightEntryDate || getTodayDateStringKSA()}
+                  onChange={(e) => handleWeightEntryDateChange(e.target.value)}
+                  min="2026-01-01"
+                  max={getTodayDateStringKSA()}
+                  className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[160px]">
+                <label className="block text-sm text-gray-400 mb-1">Weight (KG)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  placeholder="Enter weight (KG)"
+                  className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-lg"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddWeight();
+                    }
+                  }}
+                />
+              </div>
+              <button
+                onClick={handleAddWeight}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
+                {weightEntryDate && weightEntryDate !== getTodayDateStringKSA() ? 'Update weight' : 'Add weight'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Use today’s date to add today’s weight. Select a past date to add or correct a weight for that day; changes are saved to storage.
+            </p>
           </div>
         </div>
       </div>
