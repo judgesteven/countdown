@@ -181,39 +181,37 @@ const Countdown = () => {
     const calculateTimeLeft = () => {
       const now = toKSA(new Date());
       const difference = endTime.getTime() - now.getTime();
-      
-      // If we're before the start time, progress should be 0
+
+      // Progress bar: 0% before start, 0→100% between start and end, 100% after end
       if (now.getTime() < startTime.getTime()) {
         setProgress(0);
-        const timeUntilStart = startTime.getTime() - now.getTime();
-        const days = Math.floor(timeUntilStart / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
-        setTimeLeft({ days, hours, minutes });
       } else if (difference > 0) {
-        // We're between start and end time - calculate progress
         const hoursElapsed = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         const currentProgress = (hoursElapsed / totalHours) * 100;
         setProgress(Math.max(0, Math.min(currentProgress, 100)));
+      } else {
+        setProgress(100);
+      }
 
+      // Countdown: always days/hours/minutes from now to end date
+      if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-
         setTimeLeft({ days, hours, minutes });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
+      }
 
-        setDaysList(prevDays => 
+      // Update which days are past (only when we're in or past the range)
+      if (now.getTime() >= startTime.getTime()) {
+        setDaysList(prevDays =>
           prevDays.map(day => {
-            const dayStart = getStartOfDay(day.dateObj);
             const dayEnd = getEndOfDay(day.dateObj);
             const isPast = now > dayEnd;
             return { ...day, isPast };
           })
         );
-      } else {
-        // We're past the end time
-        setProgress(100);
-        setTimeLeft({ days: 0, hours: 0, minutes: 0 });
       }
     };
 
