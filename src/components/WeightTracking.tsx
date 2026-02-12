@@ -521,11 +521,12 @@ const WeightTracking = () => {
       return null;
     }
     
-    const targetWeight = firstWeight - 2;
+    // February 2026: target 90KG; other months: target = start - 2KG
+    const targetWeight = year === 2026 && month === 1 ? 90 : firstWeight - 2;
+    const totalWeightToLose = firstWeight - targetWeight;
     // Get latest weight in the month, or use firstWeight if no entries in month yet
     const latestWeight = getLatestWeightForMonth(year, month) ?? firstWeight;
     
-    const totalWeightToLose = 2; // Always 2KG
     const weightLost = firstWeight - latestWeight;
     const progress = totalWeightToLose > 0 ? (weightLost / totalWeightToLose) * 100 : 0;
     
