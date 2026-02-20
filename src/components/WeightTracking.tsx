@@ -448,22 +448,20 @@ const WeightTracking = () => {
     return first.weight;
   };
 
-  // For a given month, return the dates (at midnight) that have the highest and lowest weight.
-  // Updates as new weight readings are added. Used to colour calendar: max = red, min = green.
-  const getMonthWeightExtremes = (year: number, month: number): { maxDate: Date | null; minDate: Date | null } => {
+  // For a given month, return the highest and lowest weight values (by KSA date, same as calendar).
+  // Ongoing: as new readings are added, max/min update. Lowest = green, highest = red. Resets each new month.
+  const getMonthWeightExtremes = (year: number, month: number): { maxWeight: number | null; minWeight: number | null } => {
     const monthEntries = weightEntries.filter(entry => {
-      const entryDate = entry.date;
+      const entryDate = normalizeToKSADate(entry.date);
       return entryDate.getFullYear() === year && entryDate.getMonth() === month;
     });
     if (monthEntries.length === 0) {
-      return { maxDate: null, minDate: null };
+      return { maxWeight: null, minWeight: null };
     }
-    const byWeightDesc = [...monthEntries].sort((a, b) => b.weight - a.weight);
-    const maxEntry = byWeightDesc[0];
-    const minEntry = byWeightDesc[byWeightDesc.length - 1];
-    const maxDate = new Date(maxEntry.date.getFullYear(), maxEntry.date.getMonth(), maxEntry.date.getDate());
-    const minDate = new Date(minEntry.date.getFullYear(), minEntry.date.getMonth(), minEntry.date.getDate());
-    return { maxDate, minDate };
+    const weights = monthEntries.map(e => e.weight);
+    const maxWeight = Math.max(...weights);
+    const minWeight = Math.min(...weights);
+    return { maxWeight, minWeight };
   };
 
   // Helper function to check if a month has passed
@@ -1302,14 +1300,14 @@ const WeightTracking = () => {
                         textColor = 'text-white';
                       }
                       
-                      // Per month: colour date with highest weight red, lowest weight green (overrides activity for visibility)
-                      if (day.weight !== undefined && weightExtremes.maxDate && weightExtremes.minDate) {
-                        const isMaxWeightDay = isSameDate(day.dateObj, weightExtremes.maxDate);
-                        const isMinWeightDay = isSameDate(day.dateObj, weightExtremes.minDate);
-                        if (isMaxWeightDay && !isMinWeightDay) {
+                      // Per month: current lowest reading = green, current highest = red (ongoing; resets each new month)
+                      if (day.weight !== undefined && weightExtremes.maxWeight != null && weightExtremes.minWeight != null) {
+                        const isHighest = day.weight === weightExtremes.maxWeight;
+                        const isLowest = day.weight === weightExtremes.minWeight;
+                        if (isHighest && !isLowest) {
                           bgColor = 'bg-red-600';
                           textColor = 'text-white';
-                        } else if (isMinWeightDay) {
+                        } else if (isLowest) {
                           bgColor = 'bg-green-600';
                           textColor = 'text-white';
                         }
