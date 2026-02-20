@@ -448,19 +448,21 @@ const WeightTracking = () => {
     return first.weight;
   };
 
-  // For a given month, return the highest and lowest weight values (by KSA date, same as calendar).
-  // Ongoing: as new readings are added, max/min update. Lowest = green, highest = red. Resets each new month.
+  // Min/max from the weights actually *displayed* on the calendar for this month (one per day, same as getWeightForDate).
+  // So the lowest value is always one that appears on a cell → green will show. Resets each new month.
   const getMonthWeightExtremes = (year: number, month: number): { maxWeight: number | null; minWeight: number | null } => {
-    const monthEntries = weightEntries.filter(entry => {
-      const entryDate = normalizeToKSADate(entry.date);
-      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
-    });
-    if (monthEntries.length === 0) {
+    const lastDay = new Date(year, month + 1, 0);
+    const displayedWeights: number[] = [];
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, month, d);
+      const w = getWeightForDate(date);
+      if (w != null) displayedWeights.push(w);
+    }
+    if (displayedWeights.length === 0) {
       return { maxWeight: null, minWeight: null };
     }
-    const weights = monthEntries.map(e => e.weight);
-    const maxWeight = Math.max(...weights);
-    const minWeight = Math.min(...weights);
+    const maxWeight = Math.max(...displayedWeights);
+    const minWeight = Math.min(...displayedWeights);
     return { maxWeight, minWeight };
   };
 
@@ -1300,22 +1302,22 @@ const WeightTracking = () => {
                         textColor = 'text-white';
                       }
                       
-                      // Per month: current lowest reading = green, current highest = red (only for days in this month)
-                      const weightEpsilon = 0.005; // avoid float mismatch
+                      // Per month: lowest reading shown = green, highest = red (only for days in this month)
+                      const toTenth = (x: number) => Math.round(x * 10) / 10;
                       if (
                         day.isCurrentMonth &&
                         day.weight !== undefined &&
                         weightExtremes.maxWeight != null &&
                         weightExtremes.minWeight != null
                       ) {
-                        const w = day.weight;
-                        const isHighest = Math.abs(w - weightExtremes.maxWeight) < weightEpsilon;
-                        const isLowest = Math.abs(w - weightExtremes.minWeight) < weightEpsilon;
-                        if (isHighest && !isLowest) {
-                          bgColor = 'bg-red-600';
-                          textColor = 'text-white';
-                        } else if (isLowest) {
+                        const w = toTenth(day.weight);
+                        const isHighest = w === toTenth(weightExtremes.maxWeight);
+                        const isLowest = w === toTenth(weightExtremes.minWeight);
+                        if (isLowest) {
                           bgColor = 'bg-green-600';
+                          textColor = 'text-white';
+                        } else if (isHighest) {
+                          bgColor = 'bg-red-600';
                           textColor = 'text-white';
                         }
                       }
