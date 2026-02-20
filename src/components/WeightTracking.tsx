@@ -448,6 +448,24 @@ const WeightTracking = () => {
     return first.weight;
   };
 
+  // For a given month, return the dates (at midnight) that have the highest and lowest weight.
+  // Updates as new weight readings are added. Used to colour calendar: max = red, min = green.
+  const getMonthWeightExtremes = (year: number, month: number): { maxDate: Date | null; minDate: Date | null } => {
+    const monthEntries = weightEntries.filter(entry => {
+      const entryDate = entry.date;
+      return entryDate.getFullYear() === year && entryDate.getMonth() === month;
+    });
+    if (monthEntries.length === 0) {
+      return { maxDate: null, minDate: null };
+    }
+    const byWeightDesc = [...monthEntries].sort((a, b) => b.weight - a.weight);
+    const maxEntry = byWeightDesc[0];
+    const minEntry = byWeightDesc[byWeightDesc.length - 1];
+    const maxDate = new Date(maxEntry.date.getFullYear(), maxEntry.date.getMonth(), maxEntry.date.getDate());
+    const minDate = new Date(minEntry.date.getFullYear(), minEntry.date.getMonth(), minEntry.date.getDate());
+    return { maxDate, minDate };
+  };
+
   // Helper function to check if a month has passed
   const isMonthPast = (year: number, month: number): boolean => {
     const today = new Date();
@@ -1241,7 +1259,9 @@ const WeightTracking = () => {
                 
                 {/* Calendar grid */}
                 <div className="grid grid-cols-7 gap-1">
-                  {monthDays.map((day, index) => {
+                  {(() => {
+                    const weightExtremes = getMonthWeightExtremes(monthData.year, monthData.month);
+                    return monthDays.map((day, index) => {
                     if (!day || !day.dateObj || isNaN(day.dateObj.getTime())) {
                       return (
                         <div
@@ -1280,6 +1300,19 @@ const WeightTracking = () => {
                       if (day.activity) {
                         bgColor = 'bg-blue-600';
                         textColor = 'text-white';
+                      }
+                      
+                      // Per month: colour date with highest weight red, lowest weight green (overrides activity for visibility)
+                      if (day.weight !== undefined && weightExtremes.maxDate && weightExtremes.minDate) {
+                        const isMaxWeightDay = isSameDate(day.dateObj, weightExtremes.maxDate);
+                        const isMinWeightDay = isSameDate(day.dateObj, weightExtremes.minDate);
+                        if (isMaxWeightDay && !isMinWeightDay) {
+                          bgColor = 'bg-red-600';
+                          textColor = 'text-white';
+                        } else if (isMinWeightDay) {
+                          bgColor = 'bg-green-600';
+                          textColor = 'text-white';
+                        }
                       }
                       
                       // Add subtle highlight for today's date
@@ -1358,7 +1391,8 @@ const WeightTracking = () => {
                         </div>
                       );
                     }
-                  })}
+                  });
+                  })()}
                 </div>
                 
                 {/* Monthly Weight Progress Bar */}
