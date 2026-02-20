@@ -1300,10 +1300,17 @@ const WeightTracking = () => {
                         textColor = 'text-white';
                       }
                       
-                      // Per month: current lowest reading = green, current highest = red (ongoing; resets each new month)
-                      if (day.weight !== undefined && weightExtremes.maxWeight != null && weightExtremes.minWeight != null) {
-                        const isHighest = day.weight === weightExtremes.maxWeight;
-                        const isLowest = day.weight === weightExtremes.minWeight;
+                      // Per month: current lowest reading = green, current highest = red (only for days in this month)
+                      const weightEpsilon = 0.005; // avoid float mismatch
+                      if (
+                        day.isCurrentMonth &&
+                        day.weight !== undefined &&
+                        weightExtremes.maxWeight != null &&
+                        weightExtremes.minWeight != null
+                      ) {
+                        const w = day.weight;
+                        const isHighest = Math.abs(w - weightExtremes.maxWeight) < weightEpsilon;
+                        const isLowest = Math.abs(w - weightExtremes.minWeight) < weightEpsilon;
                         if (isHighest && !isLowest) {
                           bgColor = 'bg-red-600';
                           textColor = 'text-white';
