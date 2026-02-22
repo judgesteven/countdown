@@ -111,7 +111,7 @@ const Countdown = () => {
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 26) || // Jan 26, 2026
         (currentDate >= new Date(2026, 0, 27) && currentDate <= new Date(2026, 0, 29)); // Jan 27 - Jan 29, 2026
       
-      // Check if date is in special red ranges
+      // Check if date is in special blue ranges
       const isSpecialRed = 
         (currentDate >= new Date(2025, 11, 23) && currentDate <= new Date(2025, 11, 29)) || // Dec 23 - Dec 29
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 1) || // Jan 1, 2026
@@ -343,9 +343,9 @@ const Countdown = () => {
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
                       } else {
-                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
@@ -373,7 +373,7 @@ const Countdown = () => {
                         className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
                       >
                         {day.isPast && (
-                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                          <div className="absolute inset-0 flex items-center justify-center text-blue-500/70 text-2xl font-bold">
                             😊
                           </div>
                         )}
@@ -423,9 +423,9 @@ const Countdown = () => {
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
                       } else {
-                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
@@ -453,7 +453,7 @@ const Countdown = () => {
                         className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
                       >
                         {day.isPast && (
-                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                          <div className="absolute inset-0 flex items-center justify-center text-blue-500/70 text-2xl font-bold">
                             😊
                           </div>
                         )}
@@ -503,9 +503,9 @@ const Countdown = () => {
                       textColor = 'text-white';
                     } else if (day.isSpecialRed) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-red-600/35'; // Same red with 35% transparency
+                        bgColor = 'bg-blue-600/35'; // Same blue with 35% transparency
                       } else {
-                        bgColor = 'bg-red-600'; // Regular red for current month dates
+                        bgColor = 'bg-blue-600'; // Regular blue for current month dates
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialBlue) {
@@ -533,7 +533,7 @@ const Countdown = () => {
                         className={`${bgColor} ${textColor} rounded p-1 text-center text-xs min-h-[32px] flex items-center justify-center relative`}
                       >
                         {day.isPast && (
-                          <div className="absolute inset-0 flex items-center justify-center text-red-500/70 text-2xl font-bold">
+                          <div className="absolute inset-0 flex items-center justify-center text-blue-500/70 text-2xl font-bold">
                             😊
                           </div>
                         )}
