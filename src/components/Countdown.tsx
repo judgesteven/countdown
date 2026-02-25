@@ -95,15 +95,14 @@ const Countdown = () => {
         (currentDate >= new Date(2026, 0, 5) && currentDate <= new Date(2026, 0, 9)) || // Jan 5 - Jan 9
         (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 1, 27) && currentDate <= new Date(2026, 2, 13)) || // Feb 27 - Mar 13
-        (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)) || // Apr 3 - Apr 17
+        (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
       
       // Check if date is in special blue range
       const isSpecialBlue = 
         (currentDate >= new Date(2025, 8, 21) && currentDate <= new Date(2025, 8, 28)) || // Sep 21 - Sep 28
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 1 && currentDate.getDate() === 22) || // Feb 22, 2026
-        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 14) || // Mar 14
-        (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 22)) || // Mar 15 - Mar 22
-        (currentDate >= new Date(2026, 4, 1) && currentDate <= new Date(2026, 4, 23)) || // May 1 - May 23
+        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 14) || // Mar 14, 2026
+        (currentDate >= new Date(2026, 2, 15) && currentDate <= new Date(2026, 2, 21)) || // Mar 15 - Mar 21 (excl. Sun 22, Mon 23)
         (currentDate >= new Date(2026, 4, 24) && currentDate <= new Date(2026, 4, 30)) || // May 24 - May 30
         (currentDate >= new Date(2026, 5, 4) && currentDate <= new Date(2026, 5, 20)); // Jun 4 - Jun 20
       
