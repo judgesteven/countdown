@@ -10,6 +10,7 @@ interface DayData {
   isSpecialRed?: boolean;
   isSpecialPurple?: boolean;
   isSpecialYellow?: boolean;
+  isSpecialOrange?: boolean;
   isOverlapping?: boolean;
   dateObj: Date;
 }
@@ -111,7 +112,14 @@ const Countdown = () => {
       const isSpecialYellow = 
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 26) || // Jan 26, 2026
         (currentDate >= new Date(2026, 0, 27) && currentDate <= new Date(2026, 0, 29)); // Jan 27 - Jan 29, 2026
-      
+
+      // Check if date is in special orange range
+      const isSpecialOrange =
+        // 24th June 2026 – 10th July 2026
+        (currentDate >= new Date(2026, 5, 24) && currentDate <= new Date(2026, 6, 10)) ||
+        // 13th July 2026 – 24th July 2026
+        (currentDate >= new Date(2026, 6, 13) && currentDate <= new Date(2026, 6, 24));
+
       // Check if date is in special blue ranges
       const isSpecialRed = 
         (currentDate >= new Date(2025, 11, 23) && currentDate <= new Date(2025, 11, 29)) || // Dec 23 - Dec 29
@@ -123,7 +131,7 @@ const Countdown = () => {
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 4 && currentDate.getDate() === 5); // May 5, 2026
       
       // Check if this date appears in multiple months (overlapping)
-      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple || isSpecialYellow);
+      const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple || isSpecialYellow || isSpecialOrange);
       
       days.push({
         date: currentDate.getDate(),
@@ -135,6 +143,7 @@ const Countdown = () => {
         isSpecialRed,
         isSpecialPurple,
         isSpecialYellow,
+        isSpecialOrange,
         isOverlapping,
         dateObj: new Date(currentDate)
       });
@@ -332,7 +341,14 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialPurple) {
+                    if (day.isSpecialOrange) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-orange-300/30';
+                      } else {
+                        bgColor = 'bg-orange-300/70';
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialPurple) {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialYellow) {
@@ -412,7 +428,14 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialPurple) {
+                    if (day.isSpecialOrange) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-orange-300/30';
+                      } else {
+                        bgColor = 'bg-orange-300/70';
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialPurple) {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialYellow) {
@@ -492,7 +515,14 @@ const Countdown = () => {
                     let bgColor = 'bg-gray-700';
                     let textColor = 'text-gray-400';
                     
-                    if (day.isSpecialPurple) {
+                    if (day.isSpecialOrange) {
+                      if (day.isOverlapping) {
+                        bgColor = 'bg-orange-300/30';
+                      } else {
+                        bgColor = 'bg-orange-300/70';
+                      }
+                      textColor = 'text-white';
+                    } else if (day.isSpecialPurple) {
                       bgColor = 'bg-purple-600';
                       textColor = 'text-white';
                     } else if (day.isSpecialYellow) {

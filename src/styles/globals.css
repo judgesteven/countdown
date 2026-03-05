@@ -32,10 +32,6 @@ body {
   animation: lifePulse 1s infinite;
 }
 
-.weekSpecialOrange {
-  background-color: #fb923c; /* orange-400 */
-}
-
 @keyframes lifePulse {
   0% {
     transform: scale(1);

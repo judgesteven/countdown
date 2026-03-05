@@ -32,22 +32,6 @@ const getWeekStartMonday = (date: Date): Date => {
 
 const msPerWeek = 7 * 24 * 60 * 60 * 1000;
 
-// Marks special orange periods (assumed in 2026) in the life calendar.
-const orangeDateRanges = [
-  // 24th June 2026 – 10th July 2026
-  { start: new Date(2026, 5, 24), end: new Date(2026, 6, 10) },
-  // 13th July 2026 – 24th July 2026
-  { start: new Date(2026, 6, 13), end: new Date(2026, 6, 24) },
-];
-
-const isOrangeWeek = (weekStart: Date): boolean => {
-  return orangeDateRanges.some((range) => {
-    const rangeStartWeek = getWeekStartMonday(range.start);
-    const rangeEndWeek = getWeekStartMonday(range.end);
-    return weekStart.getTime() >= rangeStartWeek.getTime() && weekStart.getTime() <= rangeEndWeek.getTime();
-  });
-};
-
 const loadSettingsFromStorage = (): LifeCalendarSettings => {
   if (typeof window === 'undefined') {
     return DEFAULT_SETTINGS;
@@ -179,13 +163,10 @@ const LifeCalendar = () => {
       else if (time === currentWeekStartTime) status = 'current';
       else status = 'future';
 
-      const orange = isOrangeWeek(weekStart);
-
       return {
         index,
         weekStart,
         status,
-        orange,
       };
     });
   }, [weekStarts, currentWeekStartTime]);
@@ -333,7 +314,7 @@ const LifeCalendar = () => {
           style={maxWidthStyle}
           aria-label="Life calendar showing weeks lived and remaining"
         >
-          {[...weeksWithStatus].reverse().map(({ index, weekStart, status, orange }) => {
+          {[...weeksWithStatus].reverse().map(({ index, weekStart, status }) => {
             const dateLabel = weekStart.toLocaleDateString(undefined, {
               year: 'numeric',
               month: 'short',
@@ -347,10 +328,6 @@ const LifeCalendar = () => {
             if (status === 'past') className += 'weekPast';
             else if (status === 'future') className += 'weekFuture';
             else className += 'weekCurrent';
-
-            if (orange) {
-              className += ' weekSpecialOrange';
-            }
 
             return (
               <button
