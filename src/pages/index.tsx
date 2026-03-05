@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Countdown from '@/components/Countdown';
 import WeightTracking from '@/components/WeightTracking';
+import LifeCalendar from '@/components/LifeCalendar';
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<'countdown' | 'activity'>('countdown');
+  const [currentPage, setCurrentPage] = useState<'countdown' | 'activity' | 'life'>('countdown');
 
   return (
     <div className="min-h-screen bg-gray-900 relative">
@@ -30,12 +31,24 @@ export default function Home() {
           >
             Activity
           </button>
+          <button
+            onClick={() => setCurrentPage('life')}
+            className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+              currentPage === 'life'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Life
+          </button>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-center">
-          {currentPage === 'countdown' ? <Countdown /> : <WeightTracking />}
+          {currentPage === 'countdown' && <Countdown />}
+          {currentPage === 'activity' && <WeightTracking />}
+          {currentPage === 'life' && <LifeCalendar />}
         </div>
       </div>
     </div>

@@ -11,3 +11,42 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 } 
+
+.life-week-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(15, 23, 42, 0.7);
+}
+
+.weekPast {
+  background-color: #3b82f6; /* blue-500 */
+}
+
+.weekFuture {
+  background-color: #22c55e; /* green-500 */
+}
+
+.weekCurrent {
+  background-color: #a855f7; /* purple-500 */
+  animation: lifePulse 1s infinite;
+}
+
+.weekSpecialOrange {
+  background-color: #fb923c; /* orange-400 */
+}
+
+@keyframes lifePulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
