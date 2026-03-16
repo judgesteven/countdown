@@ -887,6 +887,387 @@ const WeightTracking = () => {
     return days;
   };
 
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Memoized heavy calendar content so typing in forms stays snappy
+  const calendarContent = useMemo(() => {
+    if (!mounted || error) {
+      return null;
+    }
+
+    return (
+      <div className="w-full max-w-6xl mt-8">
+        {/* Global Expand/Collapse All Button */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={toggleAllMonths}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+            title={expandedMonths.size === calendarMonths.length ? "Collapse All" : "Expand All"}
+          >
+            {expandedMonths.size === calendarMonths.length ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+                Collapse All
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* One month per row */}
+        {calendarMonths.map((monthData) => {
+          const monthDays = getMonthData(monthData.year, monthData.month);
+          const monthlySummary = getMonthlySummary(monthData.year, monthData.month);
+          const monthPast = isMonthPast(monthData.year, monthData.month);
+          const isExpanded = isMonthExpanded(monthData.year, monthData.month);
+          const shouldShowCondensed = monthPast && !isExpanded;
+
+          // Get start and end weights for the month
+          const startWeightForMonth = getFirstWeightInMonth(monthData.year, monthData.month);
+          const endWeightForMonth = getLatestWeightForMonth(monthData.year, monthData.month);
+
+          return (
+            <div key={`${monthData.year}-${monthData.month}`} className="mb-8">
+              <div className="bg-gray-800 rounded-lg p-6">
+                {shouldShowCondensed ? (
+                  /* Condensed View */
+                  <div
+                    onClick={() => toggleMonth(monthData.year, monthData.month)}
+                    className="cursor-pointer hover:bg-gray-700/50 transition-colors rounded-lg p-3"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-xl font-bold">{monthData.name}</h2>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Start Weight</div>
+                        <div className="text-base font-bold text-yellow-400">
+                          {startWeightForMonth !== null ? `${startWeightForMonth.toFixed(1)} kg` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">End Weight</div>
+                        <div className="text-base font-bold text-yellow-400">
+                          {endWeightForMonth !== null ? `${endWeightForMonth.toFixed(1)} kg` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Distance</div>
+                        <div className="text-base font-bold text-blue-400">
+                          {monthlySummary.totalDistance.toFixed(1)} km
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Runs</div>
+                        <div className="text-base font-bold text-green-400">{monthlySummary.totalRuns}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Time</div>
+                        <div className="text-base font-bold text-purple-400">
+                          {Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Full View */
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold">{monthData.name}</h2>
+                      <div className="flex items-center gap-4">
+                        {/* Monthly Summary */}
+                        <div className="flex gap-6 text-sm">
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-400">
+                              {monthlySummary.totalDistance.toFixed(1)} km
+                            </div>
+                            <div className="text-xs text-gray-400">Distance</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-green-400">{monthlySummary.totalRuns}</div>
+                            <div className="text-xs text-gray-400">Runs</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-purple-400">
+                              {Math.floor(monthlySummary.totalTime / 60)}h{' '}
+                              {Math.floor(monthlySummary.totalTime % 60)}m
+                            </div>
+                            <div className="text-xs text-gray-400">Time</div>
+                          </div>
+                        </div>
+                        {/* Expand/Collapse Icon */}
+                        <button
+                          onClick={() => toggleMonth(monthData.year, monthData.month)}
+                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          {isExpanded ? (
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Weekday headers */}
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {weekdays.map((day) => (
+                        <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Calendar grid */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {(() => {
+                        const weightExtremes = getMonthWeightExtremes(monthData.year, monthData.month);
+                        return monthDays.map((day, index) => {
+                          if (!day || !day.dateObj || isNaN(day.dateObj.getTime())) {
+                            return (
+                              <div
+                                key={index}
+                                className="bg-gray-700 rounded p-1 text-center text-xs min-h-[48px] flex flex-col items-center justify-center"
+                              >
+                                <span className="text-gray-500">—</span>
+                              </div>
+                            );
+                          }
+
+                          try {
+                            const today = new Date();
+                            const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                            const dayOnly = new Date(
+                              day.dateObj.getFullYear(),
+                              day.dateObj.getMonth(),
+                              day.dateObj.getDate()
+                            );
+                            const isPast = dayOnly < todayOnly;
+                            const isToday = dayOnly.getTime() === todayOnly.getTime();
+
+                            let bgColor = 'bg-gray-700';
+                            let textColor = 'text-gray-400';
+
+                            if (day.isCurrentMonth) {
+                              bgColor = 'bg-gray-600';
+                              textColor = 'text-white';
+                            }
+
+                            if (isPast && day.isCurrentMonth) {
+                              bgColor = 'bg-gray-600/35';
+                              textColor = 'text-gray-400';
+                            } else if (isPast) {
+                              bgColor = 'bg-gray-700/35';
+                              textColor = 'text-gray-400';
+                            }
+
+                            // Highlight days with activity - make it very visible
+                            if (day.activity) {
+                              bgColor = 'bg-blue-600';
+                              textColor = 'text-white';
+                            }
+
+                            // Per month: lowest reading shown = green, highest = red (only for days in this month)
+                            const toTenth = (x: number) => Math.round(x * 10) / 10;
+                            if (
+                              day.isCurrentMonth &&
+                              day.weight !== undefined &&
+                              weightExtremes.maxWeight != null &&
+                              weightExtremes.minWeight != null
+                            ) {
+                              const w = toTenth(day.weight);
+                              const isHighest = w === toTenth(weightExtremes.maxWeight);
+                              const isLowest = w === toTenth(weightExtremes.minWeight);
+                              if (isLowest) {
+                                bgColor = 'bg-green-600';
+                                textColor = 'text-white';
+                              } else if (isHighest) {
+                                bgColor = 'bg-red-600';
+                                textColor = 'text-white';
+                              }
+                            }
+
+                            // Add subtle highlight for today's date
+                            let borderClass = 'border-transparent';
+                            if (isToday) {
+                              borderClass = 'border-yellow-400 border-opacity-60';
+                            } else if (day.activity) {
+                              borderClass = 'border-blue-400 border-opacity-75';
+                            }
+                            const todayBg = isToday ? 'bg-yellow-500/20' : '';
+
+                            return (
+                              <div
+                                key={index}
+                                className={`${bgColor} ${todayBg} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${borderClass} group`}
+                              >
+                                <span className="font-semibold text-sm">{day.date}</span>
+                                {day.activity && (
+                                  <>
+                                    <div className="text-sm mt-1 font-bold text-white">
+                                      {day.activity.distance.toFixed(1)}km
+                                    </div>
+                                    {/* Hover popup with all activity data */}
+                                    <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
+                                      <div className="text-base font-semibold text-white mb-3 border-b border-gray-700 pb-2">
+                                        Activity Details
+                                      </div>
+                                      <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">Distance:</span>
+                                          <span className="text-white font-semibold">
+                                            {day.activity.distance.toFixed(1)} km
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">Time:</span>
+                                          <span className="text-white font-semibold">
+                                            {formatMinutesToTime(day.activity.time)}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">Pace:</span>
+                                          <span className="text-white font-semibold">
+                                            {day.activity.pace > 0
+                                              ? `${formatMinutesToPace(day.activity.pace)} min/km`
+                                              : 'N/A'}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">Avg HR:</span>
+                                          <span className="text-white font-semibold">
+                                            {day.activity.avgHeartRate > 0
+                                              ? Math.round(day.activity.avgHeartRate)
+                                              : 'N/A'}{' '}
+                                            bpm
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">Max HR:</span>
+                                          <span className="text-white font-semibold">
+                                            {day.activity.maxHeartRate > 0
+                                              ? Math.round(day.activity.maxHeartRate)
+                                              : 'N/A'}{' '}
+                                            bpm
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-400">VO2 Max:</span>
+                                          <span className="text-white font-semibold">
+                                            {day.activity.vo2Max > 0 ? Math.round(day.activity.vo2Max) : 'N/A'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      {/* Arrow pointing down */}
+                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                                {day.weight && (
+                                  <div className="text-sm mt-1 text-yellow-300 font-semibold bg-yellow-900/30 px-1.5 py-0.5 rounded">
+                                    {day.weight.toFixed(1)}kg
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          } catch (e) {
+                            console.error('Error rendering calendar day:', e);
+                            return (
+                              <div
+                                key={index}
+                                className="bg-gray-700 rounded p-1 text-center text-xs min-h-[48px] flex flex-col items-center justify-center"
+                              >
+                                <span className="text-gray-500">—</span>
+                              </div>
+                            );
+                          }
+                        });
+                      })()}
+                    </div>
+
+                    {/* Monthly Weight Progress Bar */}
+                    {(() => {
+                      const monthlyProgress = getMonthlyWeightProgress(monthData.year, monthData.month);
+                      if (monthlyProgress === null) {
+                        return null;
+                      }
+
+                      return (
+                        <div className="w-full mt-6 pt-6 border-t border-gray-700">
+                          <div className="flex items-center gap-4 mb-2">
+                            <span className="text-sm text-gray-400 w-20 text-right">
+                              {monthlyProgress.startWeight.toFixed(1)}KG
+                            </span>
+                            <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
+                              <div
+                                className="bg-green-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                                style={{ width: `${monthlyProgress.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-gray-400 w-20">
+                              {monthlyProgress.targetWeight.toFixed(1)}KG
+                            </span>
+                          </div>
+                          <div className="text-center text-sm text-gray-300">
+                            Current: {monthlyProgress.currentWeight.toFixed(1)} KG
+                            {monthlyProgress.remainingWeight > 0 && (
+                              <span className="ml-4">
+                                ({monthlyProgress.remainingWeight.toFixed(1)} KG to target -{' '}
+                                {monthlyProgress.progress.toFixed(1)}%)
+                              </span>
+                            )}
+                            {monthlyProgress.remainingWeight <= 0 && (
+                              <span className="ml-4 text-green-400">Goal Achieved! 🎉</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }, [
+    mounted,
+    error,
+    expandedMonths,
+    calendarMonths,
+    toggleAllMonths,
+    getMonthData,
+    getMonthlySummary,
+    isMonthPast,
+    isMonthExpanded,
+    getFirstWeightInMonth,
+    getLatestWeightForMonth,
+    weekdays,
+    getMonthWeightExtremes,
+    getMonthlyWeightProgress,
+    formatMinutesToTime,
+    formatMinutesToPace,
+  ]);
+
   if (!mounted) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-white">
@@ -909,11 +1290,6 @@ const WeightTracking = () => {
       </div>
     );
   }
-
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-
-
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-white px-4">
@@ -1126,322 +1502,7 @@ const WeightTracking = () => {
       </div>
 
       {/* Calendar View - 1 month per row */}
-      <div className="w-full max-w-6xl mt-8">
-        {/* Global Expand/Collapse All Button */}
-        <div className="mb-4 flex justify-end">
-          <button
-            onClick={toggleAllMonths}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
-            title={expandedMonths.size === calendarMonths.length ? "Collapse All" : "Expand All"}
-          >
-            {expandedMonths.size === calendarMonths.length ? (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-                Collapse All
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-                Expand All
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* One month per row */}
-        {calendarMonths.map((monthData) => {
-          const monthDays = getMonthData(monthData.year, monthData.month);
-          const monthlySummary = getMonthlySummary(monthData.year, monthData.month);
-          const monthPast = isMonthPast(monthData.year, monthData.month);
-          const isExpanded = isMonthExpanded(monthData.year, monthData.month);
-          const shouldShowCondensed = monthPast && !isExpanded;
-          
-          // Get start and end weights for the month
-          const startWeight = getFirstWeightInMonth(monthData.year, monthData.month);
-          const endWeight = getLatestWeightForMonth(monthData.year, monthData.month);
-          
-          return (
-            <div key={`${monthData.year}-${monthData.month}`} className="mb-8">
-              <div className="bg-gray-800 rounded-lg p-6">
-                {shouldShowCondensed ? (
-                  /* Condensed View */
-                  <div 
-                    onClick={() => toggleMonth(monthData.year, monthData.month)}
-                    className="cursor-pointer hover:bg-gray-700/50 transition-colors rounded-lg p-3"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-xl font-bold">{monthData.name}</h2>
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-0.5">Start Weight</div>
-                        <div className="text-base font-bold text-yellow-400">
-                          {startWeight !== null ? `${startWeight.toFixed(1)} kg` : 'N/A'}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-0.5">End Weight</div>
-                        <div className="text-base font-bold text-yellow-400">
-                          {endWeight !== null ? `${endWeight.toFixed(1)} kg` : 'N/A'}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-0.5">Distance</div>
-                        <div className="text-base font-bold text-blue-400">{monthlySummary.totalDistance.toFixed(1)} km</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-0.5">Runs</div>
-                        <div className="text-base font-bold text-green-400">{monthlySummary.totalRuns}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 mb-0.5">Time</div>
-                        <div className="text-base font-bold text-purple-400">
-                          {Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Full View */
-                  <>
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-2xl font-bold">{monthData.name}</h2>
-                      <div className="flex items-center gap-4">
-                        {/* Monthly Summary */}
-                        <div className="flex gap-6 text-sm">
-                          <div className="text-center">
-                            <div className="text-lg font-bold text-blue-400">{monthlySummary.totalDistance.toFixed(1)} km</div>
-                            <div className="text-xs text-gray-400">Distance</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold text-green-400">{monthlySummary.totalRuns}</div>
-                            <div className="text-xs text-gray-400">Runs</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold text-purple-400">{Math.floor(monthlySummary.totalTime / 60)}h {Math.floor(monthlySummary.totalTime % 60)}m</div>
-                            <div className="text-xs text-gray-400">Time</div>
-                          </div>
-                        </div>
-                        {/* Expand/Collapse Icon */}
-                        <button
-                          onClick={() => toggleMonth(monthData.year, monthData.month)}
-                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                          title={isExpanded ? "Collapse" : "Expand"}
-                        >
-                          {isExpanded ? (
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                
-                {/* Weekday headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {weekdays.map((day) => (
-                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {(() => {
-                    const weightExtremes = getMonthWeightExtremes(monthData.year, monthData.month);
-                    return monthDays.map((day, index) => {
-                    if (!day || !day.dateObj || isNaN(day.dateObj.getTime())) {
-                      return (
-                        <div
-                          key={index}
-                          className="bg-gray-700 rounded p-1 text-center text-xs min-h-[48px] flex flex-col items-center justify-center"
-                        >
-                          <span className="text-gray-500">—</span>
-                        </div>
-                      );
-                    }
-                    
-                    try {
-                      const today = new Date();
-                      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                      const dayOnly = new Date(day.dateObj.getFullYear(), day.dateObj.getMonth(), day.dateObj.getDate());
-                      const isPast = dayOnly < todayOnly;
-                      const isToday = dayOnly.getTime() === todayOnly.getTime();
-                      
-                      let bgColor = 'bg-gray-700';
-                      let textColor = 'text-gray-400';
-                      
-                      if (day.isCurrentMonth) {
-                        bgColor = 'bg-gray-600';
-                        textColor = 'text-white';
-                      }
-                      
-                      if (isPast && day.isCurrentMonth) {
-                        bgColor = 'bg-gray-600/35';
-                        textColor = 'text-gray-400';
-                      } else if (isPast) {
-                        bgColor = 'bg-gray-700/35';
-                        textColor = 'text-gray-400';
-                      }
-                      
-                      // Highlight days with activity - make it very visible
-                      if (day.activity) {
-                        bgColor = 'bg-blue-600';
-                        textColor = 'text-white';
-                      }
-                      
-                      // Per month: lowest reading shown = green, highest = red (only for days in this month)
-                      const toTenth = (x: number) => Math.round(x * 10) / 10;
-                      if (
-                        day.isCurrentMonth &&
-                        day.weight !== undefined &&
-                        weightExtremes.maxWeight != null &&
-                        weightExtremes.minWeight != null
-                      ) {
-                        const w = toTenth(day.weight);
-                        const isHighest = w === toTenth(weightExtremes.maxWeight);
-                        const isLowest = w === toTenth(weightExtremes.minWeight);
-                        if (isLowest) {
-                          bgColor = 'bg-green-600';
-                          textColor = 'text-white';
-                        } else if (isHighest) {
-                          bgColor = 'bg-red-600';
-                          textColor = 'text-white';
-                        }
-                      }
-                      
-                      // Add subtle highlight for today's date
-                      let borderClass = 'border-transparent';
-                      if (isToday) {
-                        borderClass = 'border-yellow-400 border-opacity-60';
-                      } else if (day.activity) {
-                        borderClass = 'border-blue-400 border-opacity-75';
-                      }
-                      const todayBg = isToday ? 'bg-yellow-500/20' : '';
-                      
-                      return (
-                        <div
-                          key={index}
-                          className={`${bgColor} ${todayBg} ${textColor} rounded p-1 text-center text-xs min-h-[56px] flex flex-col items-center justify-center relative border-2 ${borderClass} group`}
-                        >
-                          <span className="font-semibold text-sm">{day.date}</span>
-                          {day.activity && (
-                            <>
-                              <div className="text-sm mt-1 font-bold text-white">
-                                {day.activity.distance.toFixed(1)}km
-                              </div>
-                              {/* Hover popup with all activity data */}
-                              <div className="absolute z-50 hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-left">
-                                <div className="text-base font-semibold text-white mb-3 border-b border-gray-700 pb-2">
-                                  Activity Details
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Distance:</span>
-                                    <span className="text-white font-semibold">{day.activity.distance.toFixed(1)} km</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Time:</span>
-                                    <span className="text-white font-semibold">{formatMinutesToTime(day.activity.time)}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Pace:</span>
-                                    <span className="text-white font-semibold">{day.activity.pace > 0 ? `${formatMinutesToPace(day.activity.pace)} min/km` : 'N/A'}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Avg HR:</span>
-                                    <span className="text-white font-semibold">{day.activity.avgHeartRate > 0 ? Math.round(day.activity.avgHeartRate) : 'N/A'} bpm</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">Max HR:</span>
-                                    <span className="text-white font-semibold">{day.activity.maxHeartRate > 0 ? Math.round(day.activity.maxHeartRate) : 'N/A'} bpm</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-400">VO2 Max:</span>
-                                    <span className="text-white font-semibold">{day.activity.vo2Max > 0 ? Math.round(day.activity.vo2Max) : 'N/A'}</span>
-                                  </div>
-                                </div>
-                                {/* Arrow pointing down */}
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                                  <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {day.weight && (
-                            <div className="text-sm mt-1 text-yellow-300 font-semibold bg-yellow-900/30 px-1.5 py-0.5 rounded">
-                              {day.weight.toFixed(1)}kg
-                            </div>
-                          )}
-                        </div>
-                      );
-                    } catch (error) {
-                      console.error('Error rendering calendar day:', error);
-                      return (
-                        <div
-                          key={index}
-                          className="bg-gray-700 rounded p-1 text-center text-xs min-h-[48px] flex flex-col items-center justify-center"
-                        >
-                          <span className="text-gray-500">—</span>
-                        </div>
-                      );
-                    }
-                  });
-                  })()}
-                </div>
-                
-                {/* Monthly Weight Progress Bar */}
-                {(() => {
-                  const monthlyProgress = getMonthlyWeightProgress(monthData.year, monthData.month);
-                  if (monthlyProgress === null) {
-                    return null;
-                  }
-                  
-                  return (
-                    <div className="w-full mt-6 pt-6 border-t border-gray-700">
-                      <div className="flex items-center gap-4 mb-2">
-                        <span className="text-sm text-gray-400 w-20 text-right">{monthlyProgress.startWeight.toFixed(1)}KG</span>
-                        <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
-                          <div
-                            className="bg-green-600 h-6 rounded-full transition-all duration-1000 ease-out"
-                            style={{ width: `${monthlyProgress.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-400 w-20">{monthlyProgress.targetWeight.toFixed(1)}KG</span>
-                      </div>
-                      <div className="text-center text-sm text-gray-300">
-                        Current: {monthlyProgress.currentWeight.toFixed(1)} KG
-                        {monthlyProgress.remainingWeight > 0 && (
-                          <span className="ml-4">
-                            ({monthlyProgress.remainingWeight.toFixed(1)} KG to target - {monthlyProgress.progress.toFixed(1)}%)
-                          </span>
-                        )}
-                        {monthlyProgress.remainingWeight <= 0 && (
-                          <span className="ml-4 text-green-400">Goal Achieved! 🎉</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {calendarContent}
 
     </div>
   );
