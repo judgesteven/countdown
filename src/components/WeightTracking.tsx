@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import KarkkipaivaSection from '@/components/KarkkipaivaSection';
 
 interface ActivityEntry {
   date: Date;
@@ -27,6 +28,8 @@ interface DayData {
 
 const DATA_API_KEY = process.env.NEXT_PUBLIC_DATA_API_KEY || '';
 const apiHeaders: HeadersInit = DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {};
+/** All activity/weight calendar dates use Finland (EET/EEST). */
+const FINLAND_TZ = 'Europe/Helsinki';
 
 const serializeActivities = (entries: ActivityEntry[]) =>
   entries.map((entry) => ({
@@ -73,8 +76,8 @@ const WeightTracking = () => {
   const [newWeight, setNewWeight] = useState<string>('');
   const [weightEntryDate, setWeightEntryDate] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
-    const ksa = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
-    return `${ksa.getFullYear()}-${String(ksa.getMonth() + 1).padStart(2, '0')}-${String(ksa.getDate()).padStart(2, '0')}`;
+    const fin = new Date(new Date().toLocaleString('en-US', { timeZone: FINLAND_TZ }));
+    return `${fin.getFullYear()}-${String(fin.getMonth() + 1).padStart(2, '0')}-${String(fin.getDate()).padStart(2, '0')}`;
   });
   const [error, setError] = useState<string | null>(null);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -82,10 +85,9 @@ const WeightTracking = () => {
   const targetWeight = 80;
   const startWeight = 91.5;
 
-  // Helper function to convert to KSA time
-  const toKSA = (date: Date) => {
-    const ksaDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
-    return ksaDate;
+  // Helper function to convert to Finland local time (for calendar date parts)
+  const toFinland = (date: Date) => {
+    return new Date(date.toLocaleString('en-US', { timeZone: FINLAND_TZ }));
   };
 
   const updateCurrentWeightFromEntries = useCallback((entries: WeightEntry[]) => {
@@ -98,14 +100,14 @@ const WeightTracking = () => {
   const saveToLocal = useCallback((activities: ActivityEntry[], weights: WeightEntry[]) => {
     if (typeof window === 'undefined') return;
     try {
-      // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to KSA
-      const startDate = normalizeToKSADate(new Date(2026, 0, 1));
+      // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to Finland
+      const startDate = normalizeToFinlandDate(new Date(2026, 0, 1));
       const filteredActivities = activities.filter(entry => {
-        const entryDate = normalizeToKSADate(entry.date);
+        const entryDate = normalizeToFinlandDate(entry.date);
         return entryDate >= startDate;
       });
       const filteredWeights = weights.filter(entry => {
-        const entryDate = normalizeToKSADate(entry.date);
+        const entryDate = normalizeToFinlandDate(entry.date);
         return entryDate >= startDate;
       });
       
@@ -124,14 +126,14 @@ const WeightTracking = () => {
       ...(DATA_API_KEY ? { 'x-data-key': DATA_API_KEY } : {})
     };
     
-    // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to KSA
-    const startDate = normalizeToKSADate(new Date(2026, 0, 1));
+    // Filter to only include 2026 data (starting from Jan 1, 2026) - normalized to Finland
+    const startDate = normalizeToFinlandDate(new Date(2026, 0, 1));
     const filteredActivities = activities.filter(entry => {
-      const entryDate = normalizeToKSADate(entry.date);
-      return entryDate >= startDate;
-    });
-    const filteredWeights = weights.filter(entry => {
-      const entryDate = normalizeToKSADate(entry.date);
+        const entryDate = normalizeToFinlandDate(entry.date);
+        return entryDate >= startDate;
+      });
+      const filteredWeights = weights.filter(entry => {
+        const entryDate = normalizeToFinlandDate(entry.date);
       return entryDate >= startDate;
     });
     
@@ -245,35 +247,35 @@ const WeightTracking = () => {
 
   useEffect(() => {
     if (mounted && !weightEntryDate) {
-      setWeightEntryDate(getTodayDateStringKSA());
+      setWeightEntryDate(getTodayDateStringFinland());
     }
   }, [mounted, weightEntryDate]);
 
 
-  // Helper function to normalize date to KSA timezone (date only, no time)
-  const normalizeToKSADate = (date: Date): Date => {
-    const ksaDate = toKSA(date);
-    return new Date(ksaDate.getFullYear(), ksaDate.getMonth(), ksaDate.getDate());
+  // Helper function to normalize date to Finland timezone (date only, no time)
+  const normalizeToFinlandDate = (date: Date): Date => {
+    const fin = toFinland(date);
+    return new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
   };
 
-  // Get today's date string in YYYY-MM-DD (KSA) for the weight entry date picker
-  const getTodayDateStringKSA = (): string => {
-    const ksa = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
-    return `${ksa.getFullYear()}-${String(ksa.getMonth() + 1).padStart(2, '0')}-${String(ksa.getDate()).padStart(2, '0')}`;
+  // Get today's date string in YYYY-MM-DD (Finland) for the weight entry date picker
+  const getTodayDateStringFinland = (): string => {
+    const fin = new Date(new Date().toLocaleString('en-US', { timeZone: FINLAND_TZ }));
+    return `${fin.getFullYear()}-${String(fin.getMonth() + 1).padStart(2, '0')}-${String(fin.getDate()).padStart(2, '0')}`;
   };
 
-  // Parse YYYY-MM-DD to Date (start of that day); empty string = today in KSA
+  // Parse YYYY-MM-DD to Date (start of that day); empty string = today in Finland
   const getWeightEntryDate = (dateStr: string): Date => {
-    if (!dateStr) return normalizeToKSADate(new Date());
-    const d = new Date(dateStr + 'T12:00:00.000Z'); // noon UTC so calendar day is correct in KSA
-    return normalizeToKSADate(d);
+    if (!dateStr) return normalizeToFinlandDate(new Date());
+    const d = new Date(dateStr + 'T12:00:00.000Z'); // noon UTC anchor for parsing Y-M-D
+    return normalizeToFinlandDate(d);
   };
 
 
-  // Helper function to compare dates (year, month, day only) - normalized to KSA
+  // Helper function to compare dates (year, month, day only) - normalized to Finland
   const isSameDate = (date1: Date, date2: Date): boolean => {
-    const normalized1 = normalizeToKSADate(date1);
-    const normalized2 = normalizeToKSADate(date2);
+    const normalized1 = normalizeToFinlandDate(date1);
+    const normalized2 = normalizeToFinlandDate(date2);
     return normalized1.getFullYear() === normalized2.getFullYear() &&
            normalized1.getMonth() === normalized2.getMonth() &&
            normalized1.getDate() === normalized2.getDate();
@@ -351,7 +353,7 @@ const WeightTracking = () => {
         return;
       }
 
-      const selectedDate = getWeightEntryDate(weightEntryDate || getTodayDateStringKSA());
+      const selectedDate = getWeightEntryDate(weightEntryDate || getTodayDateStringFinland());
 
       const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, selectedDate));
 
@@ -559,8 +561,8 @@ const WeightTracking = () => {
 
   const handleAddActivity = async () => {
     try {
-      const now = toKSA(new Date());
-      const normalizedNow = normalizeToKSADate(now);
+      const now = toFinland(new Date());
+      const normalizedNow = normalizeToFinlandDate(now);
       normalizedNow.setHours(0, 0, 0, 0);
       const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, normalizedNow));
       const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
@@ -1427,6 +1429,8 @@ const WeightTracking = () => {
         </button>
       </div>
 
+      <KarkkipaivaSection />
+
       {/* Weight Tracking Section */}
       <div className="w-full max-w-6xl mt-8">
         <div className="bg-gray-800 rounded-lg p-6">
@@ -1464,10 +1468,10 @@ const WeightTracking = () => {
                 <label className="block text-sm text-gray-400 mb-1">Date</label>
                 <input
                   type="date"
-                  value={weightEntryDate || getTodayDateStringKSA()}
+                  value={weightEntryDate || getTodayDateStringFinland()}
                   onChange={(e) => handleWeightEntryDateChange(e.target.value)}
                   min="2026-01-01"
-                  max={getTodayDateStringKSA()}
+                  max={getTodayDateStringFinland()}
                   className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -1491,7 +1495,7 @@ const WeightTracking = () => {
                 onClick={handleAddWeight}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
               >
-                {weightEntryDate && weightEntryDate !== getTodayDateStringKSA() ? 'Update weight' : 'Add weight'}
+                {weightEntryDate && weightEntryDate !== getTodayDateStringFinland() ? 'Update weight' : 'Add weight'}
               </button>
             </div>
             <p className="text-xs text-gray-500">
