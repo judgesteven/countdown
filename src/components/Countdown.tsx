@@ -97,6 +97,7 @@ const Countdown = () => {
         (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 1, 27) && currentDate <= new Date(2026, 2, 13)) || // Feb 27 - Mar 13
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 22) || // Sun Mar 22, 2026
+        (currentDate >= new Date(2026, 2, 23) && currentDate <= new Date(2026, 2, 27)) || // Mar 23 - Mar 27
         (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)) || // Apr 3 - Apr 17
         (currentDate >= new Date(2026, 4, 1) && currentDate <= new Date(2026, 4, 15)); // May 1 - May 15
       
@@ -342,9 +343,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/30';
+                        bgColor = 'bg-orange-300/12';
                       } else {
-                        bgColor = 'bg-orange-300/70';
+                        bgColor = 'bg-orange-300/38';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
@@ -429,9 +430,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/30';
+                        bgColor = 'bg-orange-300/12';
                       } else {
-                        bgColor = 'bg-orange-300/70';
+                        bgColor = 'bg-orange-300/38';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
@@ -516,9 +517,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/30';
+                        bgColor = 'bg-orange-300/12';
                       } else {
-                        bgColor = 'bg-orange-300/70';
+                        bgColor = 'bg-orange-300/38';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
