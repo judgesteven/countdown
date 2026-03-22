@@ -343,9 +343,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/12';
+                        bgColor = 'bg-orange-300/30';
                       } else {
-                        bgColor = 'bg-orange-300/38';
+                        bgColor = 'bg-orange-300/70';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
@@ -430,9 +430,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/12';
+                        bgColor = 'bg-orange-300/30';
                       } else {
-                        bgColor = 'bg-orange-300/38';
+                        bgColor = 'bg-orange-300/70';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
@@ -517,9 +517,9 @@ const Countdown = () => {
                     
                     if (day.isSpecialOrange) {
                       if (day.isOverlapping) {
-                        bgColor = 'bg-orange-300/12';
+                        bgColor = 'bg-orange-300/30';
                       } else {
-                        bgColor = 'bg-orange-300/38';
+                        bgColor = 'bg-orange-300/70';
                       }
                       textColor = 'text-white';
                     } else if (day.isSpecialPurple) {
