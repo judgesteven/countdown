@@ -174,11 +174,6 @@ function KarkkipaivaSection() {
     setAnswer(todaySlot, null);
   };
 
-  const slotEditable = (slotIndex: number) => {
-    if (todayIsSaturday) return true;
-    return slotIndex <= todaySlot;
-  };
-
   const slotIsFuture = (slotIndex: number) => !todayIsSaturday && slotIndex > todaySlot;
 
   if (!mounted) {
@@ -232,8 +227,7 @@ function KarkkipaivaSection() {
 
       {todayIsSaturday && (
         <p className="mb-6 text-center text-gray-300 rounded-lg bg-gray-900/60 border border-gray-600 py-4 px-4">
-          Saturday — not a check-in day. You can still update Sun–Fri below. Week of{' '}
-          <span className="text-gray-400">{weekStart}</span>.
+          Saturday — not a check-in day. Week of <span className="text-gray-400">{weekStart}</span>.
         </p>
       )}
 
@@ -241,13 +235,12 @@ function KarkkipaivaSection() {
         {DAY_LABELS.map((label, slotIndex) => {
           const dateStr = ymdAddDays(weekStart, slotIndex);
           const ans = days[slotIndex];
-          const editable = slotEditable(slotIndex);
           const future = slotIsFuture(slotIndex);
 
           return (
             <div
               key={slotIndex}
-              className={`rounded-lg border p-3 flex flex-col items-center text-center min-h-[160px] ${
+              className={`rounded-lg border p-3 flex flex-col items-center text-center min-h-[120px] ${
                 future ? 'border-gray-700 bg-gray-900/40 opacity-60' : 'border-gray-600 bg-gray-900/60'
               }`}
             >
@@ -263,32 +256,6 @@ function KarkkipaivaSection() {
                 {ans === null && !future && <span className="text-gray-500 text-sm">—</span>}
                 {future && <span className="text-gray-600 text-xs">Upcoming</span>}
               </div>
-              {editable && !future && (
-                <div className="flex gap-1 mt-2 w-full justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setAnswer(slotIndex, 'yes')}
-                    className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${
-                      ans === 'yes'
-                        ? 'bg-emerald-700 text-white'
-                        : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                    }`}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAnswer(slotIndex, 'no')}
-                    className={`flex-1 text-xs py-1.5 rounded font-medium transition-colors ${
-                      ans === 'no'
-                        ? 'bg-rose-700 text-white'
-                        : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                    }`}
-                  >
-                    No
-                  </button>
-                </div>
-              )}
             </div>
           );
         })}
@@ -312,7 +279,7 @@ function KarkkipaivaSection() {
             ? negativeMood.text
             : allYes
               ? 'Nice work this week. You deserve a treat on Saturday.'
-              : 'No slips logged — six check-ins assumed positive until you mark otherwise.'}
+              : 'Keep up the good work to unlock a treat at the end of the week.'}
         </p>
       </div>
     </div>
