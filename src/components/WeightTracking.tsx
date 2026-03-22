@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, type FormEvent } from 'react';
 import KarkkipaivaSection from '@/components/KarkkipaivaSection';
 
 interface ActivityEntry {
@@ -60,25 +60,265 @@ const deserializeWeights = (entries: any[]): WeightEntry[] =>
     weight: Number(entry.weight) || 0
   }));
 
+const CALENDAR_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const CALENDAR_MONTHS = [
+  { name: 'January 2026', year: 2026, month: 0 },
+  { name: 'February 2026', year: 2026, month: 1 },
+  { name: 'March 2026', year: 2026, month: 2 },
+  { name: 'April 2026', year: 2026, month: 3 },
+  { name: 'May 2026', year: 2026, month: 4 },
+  { name: 'June 2026', year: 2026, month: 5 },
+  { name: 'July 2026', year: 2026, month: 6 },
+  { name: 'August 2026', year: 2026, month: 7 },
+  { name: 'September 2026', year: 2026, month: 8 },
+  { name: 'October 2026', year: 2026, month: 9 },
+  { name: 'November 2026', year: 2026, month: 10 },
+  { name: 'December 2026', year: 2026, month: 11 }
+];
+
+function formatMinutesToTime(minutes: number): string {
+  if (isNaN(minutes) || minutes < 0) return 'N/A';
+  const totalSeconds = Math.round(minutes * 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function formatMinutesToPace(minutes: number): string {
+  if (isNaN(minutes) || minutes < 0) return 'N/A';
+  const totalSeconds = Math.round(minutes * 60);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function parseTimeToMinutes(timeString: string): number {
+  if (!timeString || timeString.trim() === '') return NaN;
+  const parts = timeString.split(':');
+  if (parts.length === 3) {
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
+      return hours * 60 + minutes + seconds / 60;
+    }
+  } else if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    if (!isNaN(minutes) && !isNaN(seconds)) {
+      return minutes + seconds / 60;
+    }
+  }
+  return NaN;
+}
+
+function parsePaceToMinutes(paceString: string): number {
+  if (!paceString || paceString.trim() === '') return NaN;
+  const parts = paceString.split(':');
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    if (!isNaN(minutes) && !isNaN(seconds)) {
+      return minutes + seconds / 60;
+    }
+  }
+  return NaN;
+}
+
+type ActivityDraft = {
+  distance: string;
+  time: string;
+  pace: string;
+  avgHeartRate: string;
+  maxHeartRate: string;
+  vo2Max: string;
+};
+
+const emptyActivityDraft = (): ActivityDraft => ({
+  distance: '',
+  time: '',
+  pace: '',
+  avgHeartRate: '',
+  maxHeartRate: '',
+  vo2Max: ''
+});
+
+/** Local draft state so typing does not re-render the heavy calendar in the parent */
+function ActivityEntryForm({ onSubmit }: { onSubmit: (d: ActivityDraft) => Promise<boolean> }) {
+  const [draft, setDraft] = useState(emptyActivityDraft);
+  const patch = (p: Partial<ActivityDraft>) => setDraft((d) => ({ ...d, ...p }));
+
+  const submit = async () => {
+    const ok = await onSubmit(draft);
+    if (ok) setDraft(emptyActivityDraft());
+  };
+
+  return (
+    <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6">
+      <h2 className="text-2xl font-bold mb-4">Add Activity</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Distance (km)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={draft.distance}
+            onChange={(e) => patch({ distance: e.target.value })}
+            placeholder="0.0"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Time (hh:mm:ss)</label>
+          <input
+            type="text"
+            value={draft.time}
+            onChange={(e) => patch({ time: e.target.value })}
+            placeholder="00:00:00"
+            pattern="[0-9]{1,2}:[0-5][0-9]:[0-5][0-9]"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Pace (mm:ss)</label>
+          <input
+            type="text"
+            value={draft.pace}
+            onChange={(e) => patch({ pace: e.target.value })}
+            placeholder="00:00"
+            pattern="[0-9]{1,2}:[0-5][0-9]"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Avg Heart Rate (bpm)</label>
+          <input
+            type="number"
+            step="1"
+            value={draft.avgHeartRate}
+            onChange={(e) => patch({ avgHeartRate: e.target.value })}
+            placeholder="0"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Max Heart Rate (bpm)</label>
+          <input
+            type="number"
+            step="1"
+            value={draft.maxHeartRate}
+            onChange={(e) => patch({ maxHeartRate: e.target.value })}
+            placeholder="0"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">VO2 Max</label>
+          <input
+            type="number"
+            step="1"
+            value={draft.vo2Max}
+            onChange={(e) => patch({ vo2Max: e.target.value })}
+            placeholder="0"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={submit}
+        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+      >
+        Add Activity
+      </button>
+    </div>
+  );
+}
+
+function WeightEntryForm({
+  weightEntries,
+  todayYmd,
+  onSave,
+  getWeightEntryDate,
+  isSameDate
+}: {
+  weightEntries: WeightEntry[];
+  todayYmd: string;
+  onSave: (weight: number, dateStr: string) => Promise<boolean>;
+  getWeightEntryDate: (dateStr: string) => Date;
+  isSameDate: (a: Date, b: Date) => boolean;
+}) {
+  const [dateStr, setDateStr] = useState(todayYmd);
+  const [weightStr, setWeightStr] = useState('');
+
+  useEffect(() => {
+    const d = getWeightEntryDate(dateStr || todayYmd);
+    const existing = weightEntries.find((e) => isSameDate(e.date, d));
+    setWeightStr(existing != null ? String(existing.weight) : '');
+  }, [dateStr, weightEntries, getWeightEntryDate, isSameDate, todayYmd]);
+
+  const onDateChange = (v: string) => {
+    setDateStr(v);
+  };
+
+  const submit = async (e?: FormEvent) => {
+    e?.preventDefault();
+    const weight = parseFloat(weightStr);
+    if (isNaN(weight) || weight <= 0) {
+      alert('Please enter a valid weight');
+      return;
+    }
+    const ok = await onSave(weight, dateStr || todayYmd);
+    if (ok) setWeightStr('');
+  };
+
+  return (
+    <div className="space-y-4">
+      <form className="flex flex-wrap items-end gap-4" onSubmit={submit}>
+        <div className="min-w-[140px]">
+          <label className="block text-sm text-gray-400 mb-1">Date</label>
+          <input
+            type="date"
+            value={dateStr || todayYmd}
+            onChange={(e) => onDateChange(e.target.value)}
+            min="2026-01-01"
+            max={todayYmd}
+            className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+        <div className="flex-1 min-w-[160px]">
+          <label className="block text-sm text-gray-400 mb-1">Weight (KG)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={weightStr}
+            onChange={(e) => setWeightStr(e.target.value)}
+            placeholder="Enter weight (KG)"
+            className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-lg"
+          />
+        </div>
+        <button
+          type="submit"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+        >
+          {dateStr && dateStr !== todayYmd ? 'Update weight' : 'Add weight'}
+        </button>
+      </form>
+      <p className="text-xs text-gray-500">
+        Use today’s date to add today’s weight. Select a past date to add or correct a weight for that day;
+        changes are saved to storage.
+      </p>
+    </div>
+  );
+}
+
 const WeightTracking = () => {
   const [mounted, setMounted] = useState(false);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
   const [currentWeight, setCurrentWeight] = useState<number>(90);
-  const [newActivity, setNewActivity] = useState({
-    distance: '',
-    time: '',
-    pace: '',
-    avgHeartRate: '',
-    maxHeartRate: '',
-    vo2Max: ''
-  });
-  const [newWeight, setNewWeight] = useState<string>('');
-  const [weightEntryDate, setWeightEntryDate] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    const fin = new Date(new Date().toLocaleString('en-US', { timeZone: FINLAND_TZ }));
-    return `${fin.getFullYear()}-${String(fin.getMonth() + 1).padStart(2, '0')}-${String(fin.getDate()).padStart(2, '0')}`;
-  });
   const [error, setError] = useState<string | null>(null);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
@@ -245,13 +485,6 @@ const WeightTracking = () => {
     }
   }, [loadFromLocal, loadFromRemote]);
 
-  useEffect(() => {
-    if (mounted && !weightEntryDate) {
-      setWeightEntryDate(getTodayDateStringFinland());
-    }
-  }, [mounted, weightEntryDate]);
-
-
   // Helper function to normalize date to Finland timezone (date only, no time)
   const normalizeToFinlandDate = (date: Date): Date => {
     const fin = toFinland(date);
@@ -281,114 +514,48 @@ const WeightTracking = () => {
            normalized1.getDate() === normalized2.getDate();
   };
 
-  // Helper function to parse hh:mm:ss format to minutes
-  const parseTimeToMinutes = (timeString: string): number => {
-    if (!timeString || timeString.trim() === '') return NaN;
-    
-    const parts = timeString.split(':');
-    if (parts.length === 3) {
-      // hh:mm:ss format
-      const hours = parseInt(parts[0], 10);
-      const minutes = parseInt(parts[1], 10);
-      const seconds = parseInt(parts[2], 10);
-      if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
-        return hours * 60 + minutes + seconds / 60;
-      }
-    } else if (parts.length === 2) {
-      // mm:ss format (fallback)
-      const minutes = parseInt(parts[0], 10);
-      const seconds = parseInt(parts[1], 10);
-      if (!isNaN(minutes) && !isNaN(seconds)) {
-        return minutes + seconds / 60;
-      }
-    }
-    return NaN;
-  };
-
-  // Helper function to parse mm:ss format to minutes
-  const parsePaceToMinutes = (paceString: string): number => {
-    if (!paceString || paceString.trim() === '') return NaN;
-    
-    const parts = paceString.split(':');
-    if (parts.length === 2) {
-      const minutes = parseInt(parts[0], 10);
-      const seconds = parseInt(parts[1], 10);
-      if (!isNaN(minutes) && !isNaN(seconds)) {
-        return minutes + seconds / 60;
-      }
-    }
-    return NaN;
-  };
-
-
-  // Helper function to format minutes to hh:mm:ss
-  const formatMinutesToTime = (minutes: number): string => {
-    if (isNaN(minutes) || minutes < 0) return 'N/A';
-    const totalSeconds = Math.round(minutes * 60);
-    const hours = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Helper function to format minutes to mm:ss
-  const formatMinutesToPace = (minutes: number): string => {
-    if (isNaN(minutes) || minutes < 0) return 'N/A';
-    const totalSeconds = Math.round(minutes * 60);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const persistData = useCallback(async (activities: ActivityEntry[], weights: WeightEntry[]) => {
     saveToLocal(activities, weights);
     await saveToRemote(activities, weights);
   }, [saveToLocal, saveToRemote]);
 
-  const handleAddWeight = async () => {
-    try {
-      const weight = parseFloat(newWeight);
-      if (isNaN(weight) || weight <= 0) {
-        alert('Please enter a valid weight');
-        return;
+  const handleSaveWeight = useCallback(
+    async (weight: number, dateStr: string): Promise<boolean> => {
+      try {
+        const selectedDate = getWeightEntryDate(dateStr || getTodayDateStringFinland());
+        const existingEntryIndex = weightEntries.findIndex((entry) => isSameDate(entry.date, selectedDate));
+
+        let updatedEntries: WeightEntry[];
+        if (existingEntryIndex >= 0) {
+          updatedEntries = [...weightEntries];
+          updatedEntries[existingEntryIndex] = {
+            date: selectedDate,
+            weight: weight
+          };
+        } else {
+          updatedEntries = [...weightEntries, { date: selectedDate, weight: weight }];
+        }
+
+        setWeightEntries(updatedEntries);
+        updateCurrentWeightFromEntries(updatedEntries);
+        await persistData(activityEntries, updatedEntries);
+        return true;
+      } catch (error) {
+        console.error('Error adding weight:', error);
+        alert('An error occurred. Please try again.');
+        return false;
       }
-
-      const selectedDate = getWeightEntryDate(weightEntryDate || getTodayDateStringFinland());
-
-      const existingEntryIndex = weightEntries.findIndex(entry => isSameDate(entry.date, selectedDate));
-
-      let updatedEntries: WeightEntry[];
-      if (existingEntryIndex >= 0) {
-        updatedEntries = [...weightEntries];
-        updatedEntries[existingEntryIndex] = {
-          date: selectedDate,
-          weight: weight
-        };
-      } else {
-        updatedEntries = [...weightEntries, {
-          date: selectedDate,
-          weight: weight
-        }];
-      }
-
-      setWeightEntries(updatedEntries);
-      updateCurrentWeightFromEntries(updatedEntries);
-      setNewWeight('');
-      await persistData(activityEntries, updatedEntries);
-    } catch (error) {
-      console.error('Error adding weight:', error);
-      alert('An error occurred. Please try again.');
-    }
-  };
-
-  const handleWeightEntryDateChange = (dateStr: string) => {
-    setWeightEntryDate(dateStr);
-    if (dateStr) {
-      const d = getWeightEntryDate(dateStr);
-      const existing = weightEntries.find(e => isSameDate(e.date, d));
-      setNewWeight(existing != null ? String(existing.weight) : '');
-    }
-  };
+    },
+    [
+      activityEntries,
+      weightEntries,
+      persistData,
+      updateCurrentWeightFromEntries,
+      getWeightEntryDate,
+      isSameDate,
+      getTodayDateStringFinland
+    ]
+  );
 
   // Helper function to get weight for a specific date
   const getWeightForDate = (date: Date): number | null => {
@@ -503,33 +670,16 @@ const WeightTracking = () => {
     return expandedMonths.has(getMonthKey(year, month));
   };
 
-  // Define calendar months (moved here for use in toggleAllMonths)
-  const calendarMonths = [
-    { name: 'January 2026', year: 2026, month: 0 },
-    { name: 'February 2026', year: 2026, month: 1 },
-    { name: 'March 2026', year: 2026, month: 2 },
-    { name: 'April 2026', year: 2026, month: 3 },
-    { name: 'May 2026', year: 2026, month: 4 },
-    { name: 'June 2026', year: 2026, month: 5 },
-    { name: 'July 2026', year: 2026, month: 6 },
-    { name: 'August 2026', year: 2026, month: 7 },
-    { name: 'September 2026', year: 2026, month: 8 },
-    { name: 'October 2026', year: 2026, month: 9 },
-    { name: 'November 2026', year: 2026, month: 10 },
-    { name: 'December 2026', year: 2026, month: 11 }
-  ];
-
-  // Expand/collapse all months
-  const toggleAllMonths = () => {
-    if (expandedMonths.size === calendarMonths.length) {
-      // All expanded, collapse all
-      setExpandedMonths(new Set());
-    } else {
-      // Expand all
-      const allKeys = calendarMonths.map(m => getMonthKey(m.year, m.month));
-      setExpandedMonths(new Set(allKeys));
-    }
-  };
+  // Expand/collapse all months (stable handler; does not depend on expandedMonths identity)
+  const toggleAllMonths = useCallback(() => {
+    setExpandedMonths((prev) => {
+      if (prev.size === CALENDAR_MONTHS.length) {
+        return new Set();
+      }
+      const allKeys = CALENDAR_MONTHS.map((m) => getMonthKey(m.year, m.month));
+      return new Set(allKeys);
+    });
+  }, []);
 
   // Calculate monthly weight progress
   const getMonthlyWeightProgress = (year: number, month: number) => {
@@ -559,76 +709,69 @@ const WeightTracking = () => {
     };
   };
 
-  const handleAddActivity = async () => {
-    try {
-      const now = toFinland(new Date());
-      const normalizedNow = normalizeToFinlandDate(now);
-      normalizedNow.setHours(0, 0, 0, 0);
-      const existingEntryIndex = activityEntries.findIndex(entry => isSameDate(entry.date, normalizedNow));
-      const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
+  const handleAddActivityWithDraft = useCallback(
+    async (draft: ActivityDraft): Promise<boolean> => {
+      try {
+        const now = toFinland(new Date());
+        const normalizedNow = normalizeToFinlandDate(now);
+        normalizedNow.setHours(0, 0, 0, 0);
+        const existingEntryIndex = activityEntries.findIndex((entry) => isSameDate(entry.date, normalizedNow));
+        const existingEntry = existingEntryIndex >= 0 ? activityEntries[existingEntryIndex] : null;
 
-      const rawDistance = parseFloat(newActivity.distance);
-      const rawTime = parseTimeToMinutes(newActivity.time); // Parse hh:mm:ss format
-      const rawPace = parsePaceToMinutes(newActivity.pace); // Parse mm:ss format
-      const rawAvgHeartRate = parseFloat(newActivity.avgHeartRate);
-      const rawMaxHeartRate = parseFloat(newActivity.maxHeartRate);
-      const rawVo2Max = parseInt(newActivity.vo2Max, 10); // Integer only, no decimals
+        const rawDistance = parseFloat(draft.distance);
+        const rawTime = parseTimeToMinutes(draft.time);
+        const rawPace = parsePaceToMinutes(draft.pace);
+        const rawAvgHeartRate = parseFloat(draft.avgHeartRate);
+        const rawMaxHeartRate = parseFloat(draft.maxHeartRate);
+        const rawVo2Max = parseInt(draft.vo2Max, 10);
 
-      // If updating an existing entry, allow blank fields to keep previous values.
-      const distance = !isNaN(rawDistance) ? rawDistance : existingEntry?.distance ?? NaN;
-      const time = !isNaN(rawTime) ? rawTime : existingEntry?.time ?? NaN;
-      const pace = !isNaN(rawPace)
-        ? rawPace
-        : existingEntry?.pace ?? (distance > 0 ? time / distance : 0);
-      const avgHeartRate = !isNaN(rawAvgHeartRate) ? rawAvgHeartRate : existingEntry?.avgHeartRate ?? 0;
-      const maxHeartRate = !isNaN(rawMaxHeartRate) ? rawMaxHeartRate : existingEntry?.maxHeartRate ?? 0;
-      const vo2Max = !isNaN(rawVo2Max) ? rawVo2Max : existingEntry?.vo2Max ?? 0;
+        const distance = !isNaN(rawDistance) ? rawDistance : existingEntry?.distance ?? NaN;
+        const time = !isNaN(rawTime) ? rawTime : existingEntry?.time ?? NaN;
+        const pace = !isNaN(rawPace)
+          ? rawPace
+          : existingEntry?.pace ?? (distance > 0 ? time / distance : 0);
+        const avgHeartRate = !isNaN(rawAvgHeartRate) ? rawAvgHeartRate : existingEntry?.avgHeartRate ?? 0;
+        const maxHeartRate = !isNaN(rawMaxHeartRate) ? rawMaxHeartRate : existingEntry?.maxHeartRate ?? 0;
+        const vo2Max = !isNaN(rawVo2Max) ? rawVo2Max : existingEntry?.vo2Max ?? 0;
 
-      if (isNaN(distance) || distance <= 0) {
-        alert('Please enter a valid distance');
-        return;
+        if (isNaN(distance) || distance <= 0) {
+          alert('Please enter a valid distance');
+          return false;
+        }
+        if (isNaN(time) || time <= 0) {
+          alert('Please enter a valid time');
+          return false;
+        }
+
+        let updatedEntries: ActivityEntry[];
+        const newEntry: ActivityEntry = {
+          date: normalizedNow,
+          distance: distance,
+          time: time,
+          pace: isNaN(pace) ? time / distance : pace,
+          avgHeartRate: isNaN(avgHeartRate) ? 0 : avgHeartRate,
+          maxHeartRate: isNaN(maxHeartRate) ? 0 : maxHeartRate,
+          vo2Max: isNaN(vo2Max) ? 0 : vo2Max
+        };
+
+        if (existingEntryIndex >= 0) {
+          updatedEntries = [...activityEntries];
+          updatedEntries[existingEntryIndex] = newEntry;
+        } else {
+          updatedEntries = [...activityEntries, newEntry];
+        }
+
+        setActivityEntries(updatedEntries);
+        await persistData(updatedEntries, weightEntries);
+        return true;
+      } catch (error) {
+        console.error('Error adding activity:', error);
+        alert('An error occurred. Please try again.');
+        return false;
       }
-      if (isNaN(time) || time <= 0) {
-        alert('Please enter a valid time');
-        return;
-      }
-      
-      // Check if there's already an entry for today's date
-      let updatedEntries: ActivityEntry[];
-      const newEntry: ActivityEntry = {
-        date: normalizedNow,
-        distance: distance,
-        time: time,
-        pace: isNaN(pace) ? time / distance : pace,
-        avgHeartRate: isNaN(avgHeartRate) ? 0 : avgHeartRate,
-        maxHeartRate: isNaN(maxHeartRate) ? 0 : maxHeartRate,
-        vo2Max: isNaN(vo2Max) ? 0 : vo2Max
-      };
-
-      if (existingEntryIndex >= 0) {
-        // Update existing entry for today
-        updatedEntries = [...activityEntries];
-        updatedEntries[existingEntryIndex] = newEntry;
-      } else {
-        // Add new entry
-        updatedEntries = [...activityEntries, newEntry];
-      }
-      
-      setActivityEntries(updatedEntries);
-      setNewActivity({
-        distance: '',
-        time: '',
-        pace: '',
-        avgHeartRate: '',
-        maxHeartRate: '',
-        vo2Max: ''
-      });
-      await persistData(updatedEntries, weightEntries);
-    } catch (error) {
-      console.error('Error adding activity:', error);
-      alert('An error occurred. Please try again.');
-    }
-  };
+    },
+    [activityEntries, weightEntries, persistData, toFinland, normalizeToFinlandDate, isSameDate]
+  );
 
   // Calculate weight progress
   const weightProgress = useMemo(() => {
@@ -889,9 +1032,7 @@ const WeightTracking = () => {
     return days;
   };
 
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  // Memoized heavy calendar content so typing in forms stays snappy
+  // Memoized heavy calendar — deps are data + expansion only (not draft form state)
   const calendarContent = useMemo(() => {
     if (!mounted || error) {
       return null;
@@ -904,9 +1045,9 @@ const WeightTracking = () => {
           <button
             onClick={toggleAllMonths}
             className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
-            title={expandedMonths.size === calendarMonths.length ? "Collapse All" : "Expand All"}
+            title={expandedMonths.size === CALENDAR_MONTHS.length ? "Collapse All" : "Expand All"}
           >
-            {expandedMonths.size === calendarMonths.length ? (
+            {expandedMonths.size === CALENDAR_MONTHS.length ? (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -925,7 +1066,7 @@ const WeightTracking = () => {
         </div>
 
         {/* One month per row */}
-        {calendarMonths.map((monthData) => {
+        {CALENDAR_MONTHS.map((monthData) => {
           const monthDays = getMonthData(monthData.year, monthData.month);
           const monthlySummary = getMonthlySummary(monthData.year, monthData.month);
           const monthPast = isMonthPast(monthData.year, monthData.month);
@@ -1029,7 +1170,7 @@ const WeightTracking = () => {
 
                     {/* Weekday headers */}
                     <div className="grid grid-cols-7 gap-1 mb-2">
-                      {weekdays.map((day) => (
+                      {CALENDAR_WEEKDAYS.map((day) => (
                         <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
                           {day}
                         </div>
@@ -1220,7 +1361,7 @@ const WeightTracking = () => {
                             </span>
                             <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
                               <div
-                                className="bg-green-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                                className="bg-green-600 h-6 rounded-full transition-all duration-200 ease-out"
                                 style={{ width: `${monthlyProgress.progress}%` }}
                               />
                             </div>
@@ -1251,24 +1392,7 @@ const WeightTracking = () => {
         })}
       </div>
     );
-  }, [
-    mounted,
-    error,
-    expandedMonths,
-    calendarMonths,
-    toggleAllMonths,
-    getMonthData,
-    getMonthlySummary,
-    isMonthPast,
-    isMonthExpanded,
-    getFirstWeightInMonth,
-    getLatestWeightForMonth,
-    weekdays,
-    getMonthWeightExtremes,
-    getMonthlyWeightProgress,
-    formatMinutesToTime,
-    formatMinutesToPace,
-  ]);
+  }, [mounted, error, expandedMonths, activityEntries, weightEntries, toggleAllMonths]);
 
   if (!mounted) {
     return (
@@ -1339,7 +1463,7 @@ const WeightTracking = () => {
             <span className="text-sm text-gray-400 w-20 text-right">{Math.round(totalSummary.totalDistance)}KM</span>
             <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
               <div
-                className="bg-blue-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                className="bg-blue-600 h-6 rounded-full transition-all duration-200 ease-out"
                 style={{ width: `${distanceProgress.progress}%` }}
               />
             </div>
@@ -1350,84 +1474,7 @@ const WeightTracking = () => {
 
       {/* Longest Run and Half Marathon cards are now part of 2026 Totals */}
 
-      {/* Add Activity Input */}
-      <div className="w-full max-w-4xl mb-8 bg-gray-800 rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Add Activity</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Distance (km)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={newActivity.distance}
-              onChange={(e) => setNewActivity({ ...newActivity, distance: e.target.value })}
-              placeholder="0.0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Time (hh:mm:ss)</label>
-            <input
-              type="text"
-              value={newActivity.time}
-              onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
-              placeholder="00:00:00"
-              pattern="[0-9]{1,2}:[0-5][0-9]:[0-5][0-9]"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Pace (mm:ss)</label>
-            <input
-              type="text"
-              value={newActivity.pace}
-              onChange={(e) => setNewActivity({ ...newActivity, pace: e.target.value })}
-              placeholder="00:00"
-              pattern="[0-9]{1,2}:[0-5][0-9]"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Avg Heart Rate (bpm)</label>
-            <input
-              type="number"
-              step="1"
-              value={newActivity.avgHeartRate}
-              onChange={(e) => setNewActivity({ ...newActivity, avgHeartRate: e.target.value })}
-              placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Max Heart Rate (bpm)</label>
-            <input
-              type="number"
-              step="1"
-              value={newActivity.maxHeartRate}
-              onChange={(e) => setNewActivity({ ...newActivity, maxHeartRate: e.target.value })}
-              placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">VO2 Max</label>
-            <input
-              type="number"
-              step="1"
-              value={newActivity.vo2Max}
-              onChange={(e) => setNewActivity({ ...newActivity, vo2Max: e.target.value })}
-              placeholder="0"
-              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-        </div>
-        <button
-          onClick={handleAddActivity}
-          className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-        >
-          Add Activity
-        </button>
-      </div>
+      <ActivityEntryForm onSubmit={handleAddActivityWithDraft} />
 
       <KarkkipaivaSection />
 
@@ -1442,7 +1489,7 @@ const WeightTracking = () => {
               <span className="text-sm text-gray-400 w-16 text-right">{startWeight}KG</span>
               <div className="flex-1 bg-gray-700 rounded-full h-6 relative">
                 <div
-                  className="bg-green-600 h-6 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-green-600 h-6 rounded-full transition-all duration-200 ease-out"
                   style={{ width: `${weightProgress.progress}%` }}
                 />
               </div>
@@ -1461,47 +1508,13 @@ const WeightTracking = () => {
             </div>
           </div>
 
-          {/* Add / Amend Weight */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="min-w-[140px]">
-                <label className="block text-sm text-gray-400 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={weightEntryDate || getTodayDateStringFinland()}
-                  onChange={(e) => handleWeightEntryDateChange(e.target.value)}
-                  min="2026-01-01"
-                  max={getTodayDateStringFinland()}
-                  className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div className="flex-1 min-w-[160px]">
-                <label className="block text-sm text-gray-400 mb-1">Weight (KG)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={newWeight}
-                  onChange={(e) => setNewWeight(e.target.value)}
-                  placeholder="Enter weight (KG)"
-                  className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500 text-lg"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddWeight();
-                    }
-                  }}
-                />
-              </div>
-              <button
-                onClick={handleAddWeight}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-              >
-                {weightEntryDate && weightEntryDate !== getTodayDateStringFinland() ? 'Update weight' : 'Add weight'}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Use today’s date to add today’s weight. Select a past date to add or correct a weight for that day; changes are saved to storage.
-            </p>
-          </div>
+          <WeightEntryForm
+            weightEntries={weightEntries}
+            todayYmd={getTodayDateStringFinland()}
+            onSave={handleSaveWeight}
+            getWeightEntryDate={getWeightEntryDate}
+            isSameDate={isSameDate}
+          />
         </div>
       </div>
 

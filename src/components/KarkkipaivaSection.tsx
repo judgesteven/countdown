@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react';
 
 const STORAGE_KEY = 'karkkipaivaWeek';
 /** Finland (EET/EEST) — all calendar days and “today” use this zone */
@@ -91,7 +91,7 @@ function BigGreenCheck({ className = 'w-24 h-24' }: { className?: string }) {
   );
 }
 
-export default function KarkkipaivaSection() {
+function KarkkipaivaSection() {
   const [mounted, setMounted] = useState(false);
   const [days, setDays] = useState<SixDays>(emptyWeek);
 
@@ -159,7 +159,7 @@ export default function KarkkipaivaSection() {
               }
             : null;
 
-  const setAnswer = (slotIndex: number, ans: 'yes' | 'no') => {
+  const setAnswer = (slotIndex: number, ans: 'yes' | 'no' | null) => {
     const sunday = getSundayStartStringFinland();
     setDays((prev) => {
       const next = [...prev] as SixDays;
@@ -167,6 +167,11 @@ export default function KarkkipaivaSection() {
       saveState({ weekStartSunday: sunday, days: next });
       return next;
     });
+  };
+
+  const clearTodayCheckIn = () => {
+    if (todayIsSaturday || todaySlot < 0) return;
+    setAnswer(todaySlot, null);
   };
 
   const slotEditable = (slotIndex: number) => {
@@ -207,6 +212,15 @@ export default function KarkkipaivaSection() {
             >
               No
             </button>
+            {days[todaySlot] != null && (
+              <button
+                type="button"
+                onClick={clearTodayCheckIn}
+                className="px-8 py-3 rounded-lg font-semibold bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-500 transition-colors"
+              >
+                Clear
+              </button>
+            )}
           </div>
           {days[todaySlot] === 'yes' && (
             <div className="flex justify-center">
@@ -280,27 +294,29 @@ export default function KarkkipaivaSection() {
         })}
       </div>
 
-      {(hasAnyNo || allYes) && (
-        <div
-          className="mt-8 flex flex-col items-center justify-center rounded-xl border border-gray-600 bg-gray-900/50 py-8 px-4"
-          aria-live="polite"
-        >
-          {hasAnyNo && negativeMood ? (
-            <span className="text-8xl leading-none" role="img" aria-label={negativeMood.aria}>
-              {negativeMood.emoji}
-            </span>
-          ) : (
-            <span className="text-8xl leading-none" role="img" aria-label="Happy">
-              😊
-            </span>
-          )}
-          <p className="mt-4 text-center text-sm text-gray-500 max-w-md">
-            {hasAnyNo && negativeMood
-              ? negativeMood.text
-              : 'Nice work this week. You deserve a treat on Saturday.'}
-          </p>
-        </div>
-      )}
+      <div
+        className="mt-8 flex flex-col items-center justify-center rounded-xl border border-gray-600 bg-gray-900/50 py-8 px-4"
+        aria-live="polite"
+      >
+        {hasAnyNo && negativeMood ? (
+          <span className="text-8xl leading-none" role="img" aria-label={negativeMood.aria}>
+            {negativeMood.emoji}
+          </span>
+        ) : (
+          <span className="text-8xl leading-none" role="img" aria-label="Happy">
+            😊
+          </span>
+        )}
+        <p className="mt-4 text-center text-sm text-gray-500 max-w-md">
+          {hasAnyNo && negativeMood
+            ? negativeMood.text
+            : allYes
+              ? 'Nice work this week. You deserve a treat on Saturday.'
+              : 'No slips logged — six check-ins assumed positive until you mark otherwise.'}
+        </p>
+      </div>
     </div>
   );
 }
+
+export default memo(KarkkipaivaSection);
