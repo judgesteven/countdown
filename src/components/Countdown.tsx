@@ -97,7 +97,8 @@ const Countdown = () => {
         (currentDate >= new Date(2026, 0, 30) && currentDate <= new Date(2026, 1, 13)) || // Jan 30 - Feb 13
         (currentDate >= new Date(2026, 1, 27) && currentDate <= new Date(2026, 2, 13)) || // Feb 27 - Mar 13
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 2 && currentDate.getDate() === 22) || // Sun Mar 22, 2026
-        (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)); // Apr 3 - Apr 17
+        (currentDate >= new Date(2026, 3, 3) && currentDate <= new Date(2026, 3, 17)) || // Apr 3 - Apr 17
+        (currentDate >= new Date(2026, 4, 1) && currentDate <= new Date(2026, 4, 15)); // May 1 - May 15
       
       // Check if date is in special blue range
       const isSpecialBlue = 
@@ -115,8 +116,8 @@ const Countdown = () => {
 
       // Check if date is in special orange range
       const isSpecialOrange =
-        // 24th June 2026 – 10th July 2026
-        (currentDate >= new Date(2026, 5, 24) && currentDate <= new Date(2026, 6, 10)) ||
+        // 24th June 2026 – 12th July 2026 (includes 11–12 so no gap before next block)
+        (currentDate >= new Date(2026, 5, 24) && currentDate <= new Date(2026, 6, 12)) ||
         // 13th July 2026 – 24th July 2026
         (currentDate >= new Date(2026, 6, 13) && currentDate <= new Date(2026, 6, 24));
 
@@ -126,9 +127,7 @@ const Countdown = () => {
         (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0 && currentDate.getDate() === 1) || // Jan 1, 2026
         (currentDate >= new Date(2026, 0, 2) && currentDate <= new Date(2026, 0, 4)); // Jan 2 - Jan 4, 2026
       
-      // Check if date is May 5th (special purple highlighting)
-      const isSpecialPurple = 
-        (currentDate.getFullYear() === 2026 && currentDate.getMonth() === 4 && currentDate.getDate() === 5); // May 5, 2026
+      const isSpecialPurple = false;
       
       // Check if this date appears in multiple months (overlapping)
       const isOverlapping = !isCurrentMonth && (isSpecialGreen || isSpecialBlue || isSpecialRed || isSpecialPurple || isSpecialYellow || isSpecialOrange);
