@@ -1076,6 +1076,7 @@ const WeightTracking = () => {
           // Get start and end weights for the month
           const startWeightForMonth = getFirstWeightInMonth(monthData.year, monthData.month);
           const endWeightForMonth = getLatestWeightForMonth(monthData.year, monthData.month);
+          const weightExtremes = getMonthWeightExtremes(monthData.year, monthData.month);
 
           return (
             <div key={`${monthData.year}-${monthData.month}`} className="mb-8">
@@ -1092,7 +1093,7 @@ const WeightTracking = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                       <div className="text-center">
                         <div className="text-xs text-gray-400 mb-0.5">Start Weight</div>
                         <div className="text-base font-bold text-yellow-400">
@@ -1103,6 +1104,12 @@ const WeightTracking = () => {
                         <div className="text-xs text-gray-400 mb-0.5">End Weight</div>
                         <div className="text-base font-bold text-yellow-400">
                           {endWeightForMonth !== null ? `${endWeightForMonth.toFixed(1)} kg` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-400 mb-0.5">Lowest Weight</div>
+                        <div className="text-base font-bold text-yellow-400">
+                          {weightExtremes.minWeight !== null ? `${weightExtremes.minWeight.toFixed(1)} kg` : 'N/A'}
                         </div>
                       </div>
                       <div className="text-center">
